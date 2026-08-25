@@ -1,40 +1,40 @@
 package com.carl.editor
 
 import android.net.Uri
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.media3.common.MediaItem
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.PlayerView
 
 @Composable
-fun PreviewPlaceholderScreen(uri: Uri) {
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = Color.Black
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "Video selected:",
-                color = Color.White,
-                style = MaterialTheme.typography.titleMedium
-            )
-            Text(
-                text = uri.toString(),
-                color = Color.Gray,
-                style = MaterialTheme.typography.bodySmall
-            )
+fun PreviewScreen(uri: Uri) {
+    val context = LocalContext.current
+    val exoPlayer = remember {
+        ExoPlayer.Builder(context).build().apply {
+            setMediaItem(MediaItem.fromUri(uri))
+            prepare()
+            playWhenReady = true
         }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose { exoPlayer.release() }
+    }
+
+    Surface(modifier = Modifier.fillMaxSize(), color = Color.Black) {
+        AndroidView(
+            factory = { ctx ->
+                PlayerView(ctx).apply { player = exoPlayer }
+            },
+            modifier = Modifier.fillMaxSize()
+        )
     }
 }
