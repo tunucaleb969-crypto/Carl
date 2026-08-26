@@ -48,8 +48,12 @@
 Start Phase 5: media picker so "New Project" actually opens the device's photo/video picker.
 
 ## Completed
-(add this line)
 - Phase 6: Real video preview via Media3 ExoPlayer (pinned to 1.4.1 for compileSdk 34 compat) — PreviewScreen.kt plays picked video, confirmed on device
 
 ## Current next step
 Start Phase 7: basic timeline (show a scrubbable progress bar / seek control first, then trim).
+## Completed
+- Phase 7: Basic timeline — seek bar, position/duration display, play/pause (TimelineControls.kt), confirmed on device
+
+## Current next step
+Start Phase 8: real editing — trim and split, with undo/redo.
