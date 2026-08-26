@@ -20,6 +20,8 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
+import com.carl.editor.timeline.TimelineControls
+import com.carl.editor.timeline.TrimState
 import kotlinx.coroutines.delay
 
 @Composable
@@ -36,6 +38,7 @@ fun PreviewScreen(uri: Uri) {
     var isPlaying by remember { mutableStateOf(true) }
     var position by remember { mutableLongStateOf(0L) }
     var duration by remember { mutableLongStateOf(0L) }
+    var trimState by remember { mutableStateOf(TrimState()) }
 
     DisposableEffect(Unit) {
         val listener = object : Player.Listener {
@@ -50,10 +53,16 @@ fun PreviewScreen(uri: Uri) {
         }
     }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(true) {
         while (true) {
             duration = exoPlayer.duration.coerceAtLeast(0L)
             position = exoPlayer.currentPosition
+            trimState = trimState.withDuration(duration)
+
+            if (trimState.endMs > 0 && position >= trimState.endMs) {
+                exoPlayer.seekTo(trimState.startMs)
+            }
+
             delay(200)
         }
     }
@@ -68,10 +77,12 @@ fun PreviewScreen(uri: Uri) {
                 positionMs = position,
                 durationMs = duration,
                 isPlaying = isPlaying,
+                trimState = trimState,
                 onSeek = { seekTo -> exoPlayer.seekTo(seekTo) },
-                onPlayPauseClick = {
+                onPlayPause = {
                     if (exoPlayer.isPlaying) exoPlayer.pause() else exoPlayer.play()
-                }
+                },
+                onTrimChange = { trimState = it }
             )
         }
     }
