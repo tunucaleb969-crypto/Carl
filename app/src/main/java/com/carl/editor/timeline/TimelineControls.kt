@@ -8,7 +8,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -20,10 +19,20 @@ fun TimelineControls(
     positionMs: Long,
     durationMs: Long,
     isPlaying: Boolean,
-    trimState: TrimState,
+    clips: List<Clip>,
+    canUndo: Boolean,
+    canRedo: Boolean,
     onSeek: (Long) -> Unit,
     onPlayPause: () -> Unit,
-    onTrimChange: (TrimState) -> Unit,
+    onSplit: () -> Unit,
+    onUndo: () -> Unit,
+    onRedo: () -> Unit,
+    onTrimStartDragBegin: () -> Unit,
+    onTrimStartDrag: (deltaMs: Long) -> Unit,
+    onTrimStartDragEnd: () -> Unit,
+    onTrimEndDragBegin: () -> Unit,
+    onTrimEndDrag: (deltaMs: Long) -> Unit,
+    onTrimEndDragEnd: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var trackWidthPx by remember { mutableStateOf(1f) }
@@ -31,6 +40,11 @@ fun TimelineControls(
     fun pxToMs(px: Float): Long {
         if (durationMs == 0L || trackWidthPx == 0f) return 0L
         return ((px / trackWidthPx) * durationMs).toLong().coerceIn(0L, durationMs)
+    }
+
+    fun pxDeltaToMsDelta(px: Float): Long {
+        if (durationMs == 0L || trackWidthPx == 0f) return 0L
+        return ((px / trackWidthPx) * durationMs).toLong()
     }
 
     fun msToPx(ms: Long): Float {
@@ -71,13 +85,25 @@ fun TimelineControls(
                     .background(Color.DarkGray, RoundedCornerShape(3.dp))
             )
 
-            // trimmed (active) range highlight
-            val startPx = msToPx(trimState.startMs)
-            val endPx = msToPx(trimState.endMs)
+            // clip boundary markers (one per cut point between clips)
+            var elapsed = 0L
+            for (clip in clips.dropLast(1)) {
+                elapsed += clip.durationMs
+                val boundaryPx = msToPx(elapsed)
+                Box(
+                    modifier = Modifier
+                        .offset(x = withDp(boundaryPx - 1f))
+                        .width(2.dp)
+                        .height(24.dp)
+                        .align(Alignment.CenterStart)
+                        .background(Color.White)
+                )
+            }
+
+            // active range fill (always the full current duration, since trimming is edge-based now)
             Box(
                 modifier = Modifier
-                    .offset(x = withDp(startPx))
-                    .width(withDp((endPx - startPx).coerceAtLeast(0f)))
+                    .fillMaxWidth()
                     .height(6.dp)
                     .align(Alignment.CenterStart)
                     .background(Color(0xFF00E5A0), RoundedCornerShape(3.dp))
@@ -93,32 +119,40 @@ fun TimelineControls(
                     .background(Color.White, RoundedCornerShape(2.dp))
             )
 
-            // start trim handle
+            // start trim handle (always the left edge of the timeline)
             Box(
                 modifier = Modifier
-                    .offset(x = withDp(startPx - 8f))
+                    .offset(x = withDp(-8f))
                     .width(16.dp)
                     .height(40.dp)
                     .align(Alignment.CenterStart)
                     .background(Color(0xFF00E5A0), RoundedCornerShape(4.dp))
                     .pointerInput(durationMs) {
-                        detectDragGestures { change, _ ->
-                            onTrimChange(trimState.setStart(pxToMs(change.position.x + startPx)))
+                        detectDragGestures(
+                            onDragStart = { onTrimStartDragBegin() },
+                            onDragEnd = { onTrimStartDragEnd() },
+                            onDragCancel = { onTrimStartDragEnd() }
+                        ) { _, dragAmount ->
+                            onTrimStartDrag(pxDeltaToMsDelta(dragAmount.x))
                         }
                     }
             )
 
-            // end trim handle
+            // end trim handle (always the right edge of the timeline)
             Box(
                 modifier = Modifier
-                    .offset(x = withDp(endPx - 8f))
+                    .offset(x = withDp(msToPx(durationMs) - 8f))
                     .width(16.dp)
                     .height(40.dp)
                     .align(Alignment.CenterStart)
                     .background(Color(0xFF00E5A0), RoundedCornerShape(4.dp))
                     .pointerInput(durationMs) {
-                        detectDragGestures { change, _ ->
-                            onTrimChange(trimState.setEnd(pxToMs(change.position.x + endPx)))
+                        detectDragGestures(
+                            onDragStart = { onTrimEndDragBegin() },
+                            onDragEnd = { onTrimEndDragEnd() },
+                            onDragCancel = { onTrimEndDragEnd() }
+                        ) { _, dragAmount ->
+                            onTrimEndDrag(pxDeltaToMsDelta(dragAmount.x))
                         }
                     }
             )
@@ -128,10 +162,19 @@ fun TimelineControls(
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center
+            horizontalArrangement = Arrangement.SpaceEvenly
         ) {
+            IconButton(onClick = onUndo, enabled = canUndo) {
+                Text("\u21B6", style = MaterialTheme.typography.titleLarge)
+            }
             IconButton(onClick = onPlayPause) {
-                Text(if (isPlaying) "⏸" else "▶", style = MaterialTheme.typography.titleLarge)
+                Text(if (isPlaying) "\u23F8" else "\u25B6", style = MaterialTheme.typography.titleLarge)
+            }
+            IconButton(onClick = onSplit) {
+                Text("\u2702", style = MaterialTheme.typography.titleLarge)
+            }
+            IconButton(onClick = onRedo, enabled = canRedo) {
+                Text("\u21B7", style = MaterialTheme.typography.titleLarge)
             }
         }
     }
