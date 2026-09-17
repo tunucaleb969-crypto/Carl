@@ -1,6 +1,8 @@
 package com.carl.editor.effects
 
+import androidx.annotation.OptIn
 import androidx.media3.common.Effect
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.effect.ScaleAndRotateTransformation
 
 /**
@@ -20,7 +22,13 @@ data class GlobalTransform(
         return copy(rotationDegrees = (rotationDegrees + 90f) % 360f)
     }
 
-    /** Builds the Media3 Effect list for this transform, or an empty list if it's a no-op. */
+    /**
+     * Builds the Media3 Effect list for this transform, or an empty list if it's a no-op.
+     * ScaleAndRotateTransformation is @UnstableApi - Media3's effects framework is marked
+     * unstable project-wide (subject to change, not yet API-frozen), which Kotlin enforces
+     * as a hard compile error unless every usage site opts in explicitly.
+     */
+    @OptIn(UnstableApi::class)
     fun toEffects(): List<Effect> {
         if (rotationDegrees == 0f && !flipHorizontal && !flipVertical) return emptyList()
         val scaleX = if (flipHorizontal) -1f else 1f
