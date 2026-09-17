@@ -2,6 +2,7 @@ package com.carl.editor
 
 import android.media.MediaMetadataRetriever
 import android.net.Uri
+import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,11 +30,14 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import com.carl.editor.canvas.CanvasControls
 import com.carl.editor.canvas.CanvasSettings
+import com.carl.editor.effects.ColorAdjustment
+import com.carl.editor.effects.ColorAdjustmentControls
 import com.carl.editor.effects.GlobalTransform
 import com.carl.editor.effects.GlobalTransformControls
 import com.carl.editor.timeline.Clip
@@ -44,6 +48,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
+// This screen calls ExoPlayer.setVideoEffects() and builds Media3 effect objects
+// (ScaleAndRotateTransformation, Brightness, Contrast, HslAdjustment), all of which are
+// @UnstableApi in Media3's effects framework. Kotlin enforces that as a compile error unless
+// opted into - see GlobalTransform.kt / ColorAdjustment.kt for the same annotation on the
+// effect-building side.
+@OptIn(UnstableApi::class)
 @Composable
 fun PreviewScreen(uri: Uri) {
     val context = LocalContext.current
@@ -60,8 +70,10 @@ fun PreviewScreen(uri: Uri) {
     var draftClips by remember { mutableStateOf<List<Clip>?>(null) }
     // Whole-video rotate/flip - NOT per-clip (see GlobalTransform kdoc for why).
     var globalTransform by remember { mutableStateOf(GlobalTransform()) }
+    // Whole-video brightness/contrast/saturation - same scope limitation as globalTransform.
+    var colorAdjustment by remember { mutableStateOf(ColorAdjustment()) }
     // Output frame: aspect ratio + background fill. Pure Compose layout, independent of
-    // globalTransform / ExoPlayer video effects.
+    // globalTransform / colorAdjustment / ExoPlayer video effects.
     var canvasSettings by remember { mutableStateOf(CanvasSettings()) }
 
     val committedClips = history.present.clips
@@ -95,12 +107,13 @@ fun PreviewScreen(uri: Uri) {
         }
     }
 
-    // Rebuild the ExoPlayer playlist whenever the committed clip list OR the global transform
-    // changes (split, trim commit, undo, redo, speed change, rotate, flip) - never during a live
-    // drag, which only touches draftClips. setVideoEffects() must be called before prepare(), and
-    // dynamically swapping effects on an already-prepared player has known stability issues, so we
-    // always go through this same rebuild path rather than hot-swapping effects in place.
-    LaunchedEffect(committedClips, globalTransform) {
+    // Rebuild the ExoPlayer playlist whenever the committed clip list OR either whole-video effect
+    // set changes (split, trim commit, undo, redo, speed change, rotate, flip, color adjustment) -
+    // never during a live drag, which only touches draftClips. setVideoEffects() must be called
+    // before prepare(), and dynamically swapping effects on an already-prepared player has known
+    // stability issues, so we always go through this same rebuild path rather than hot-swapping
+    // effects in place.
+    LaunchedEffect(committedClips, globalTransform, colorAdjustment) {
         if (committedClips.isEmpty()) return@LaunchedEffect
         val mediaItems = committedClips.map { clip ->
             MediaItem.Builder()
@@ -113,7 +126,7 @@ fun PreviewScreen(uri: Uri) {
                 )
                 .build()
         }
-        exoPlayer.setVideoEffects(globalTransform.toEffects())
+        exoPlayer.setVideoEffects(globalTransform.toEffects() + colorAdjustment.toEffects())
         exoPlayer.setMediaItems(mediaItems)
         exoPlayer.prepare()
         exoPlayer.playWhenReady = isPlaying
@@ -283,6 +296,14 @@ fun PreviewScreen(uri: Uri) {
                 settings = canvasSettings,
                 onSelectAspectRatio = { preset -> canvasSettings = canvasSettings.copy(aspectRatio = preset) },
                 onSelectBackgroundColor = { color -> canvasSettings = canvasSettings.copy(backgroundColor = color) }
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            ColorAdjustmentControls(
+                adjustment = colorAdjustment,
+                onBrightnessChange = { colorAdjustment = colorAdjustment.copy(brightness = it) },
+                onContrastChange = { colorAdjustment = colorAdjustment.copy(contrast = it) },
+                onSaturationChange = { colorAdjustment = colorAdjustment.copy(saturation = it) },
+                onReset = { colorAdjustment = ColorAdjustment() }
             )
         }
     }
