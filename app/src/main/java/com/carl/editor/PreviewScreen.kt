@@ -3,7 +3,9 @@ package com.carl.editor
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -16,12 +18,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
+import com.carl.editor.effects.GlobalTransform
+import com.carl.editor.effects.GlobalTransformControls
 import com.carl.editor.timeline.Clip
 import com.carl.editor.timeline.EditHistory
 import com.carl.editor.timeline.EditState
@@ -44,6 +49,8 @@ fun PreviewScreen(uri: Uri) {
     // Non-null only while a trim handle is actively being dragged; holds the live preview
     // so we don't rebuild the ExoPlayer playlist on every drag frame.
     var draftClips by remember { mutableStateOf<List<Clip>?>(null) }
+    // Whole-video rotate/flip - NOT per-clip (see GlobalTransform kdoc for why).
+    var globalTransform by remember { mutableStateOf(GlobalTransform()) }
 
     val committedClips = history.present.clips
     val displayClips = draftClips ?: committedClips
@@ -76,9 +83,12 @@ fun PreviewScreen(uri: Uri) {
         }
     }
 
-    // Rebuild the ExoPlayer playlist whenever the committed clip list changes (split, trim commit,
-    // undo, redo, speed change) - never during a live drag, which only touches draftClips.
-    LaunchedEffect(committedClips) {
+    // Rebuild the ExoPlayer playlist whenever the committed clip list OR the global transform
+    // changes (split, trim commit, undo, redo, speed change, rotate, flip) - never during a live
+    // drag, which only touches draftClips. setVideoEffects() must be called before prepare(), and
+    // dynamically swapping effects on an already-prepared player has known stability issues, so we
+    // always go through this same rebuild path rather than hot-swapping effects in place.
+    LaunchedEffect(committedClips, globalTransform) {
         if (committedClips.isEmpty()) return@LaunchedEffect
         val mediaItems = committedClips.map { clip ->
             MediaItem.Builder()
@@ -91,6 +101,7 @@ fun PreviewScreen(uri: Uri) {
                 )
                 .build()
         }
+        exoPlayer.setVideoEffects(globalTransform.toEffects())
         exoPlayer.setMediaItems(mediaItems)
         exoPlayer.prepare()
         exoPlayer.playWhenReady = isPlaying
@@ -219,6 +230,17 @@ fun PreviewScreen(uri: Uri) {
                     }
                 },
                 onTrimEndDragEnd = { commitDraft() }
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            GlobalTransformControls(
+                transform = globalTransform,
+                onRotate = { globalTransform = globalTransform.rotatedClockwise() },
+                onToggleFlipHorizontal = {
+                    globalTransform = globalTransform.copy(flipHorizontal = !globalTransform.flipHorizontal)
+                },
+                onToggleFlipVertical = {
+                    globalTransform = globalTransform.copy(flipVertical = !globalTransform.flipVertical)
+                }
             )
         }
     }
