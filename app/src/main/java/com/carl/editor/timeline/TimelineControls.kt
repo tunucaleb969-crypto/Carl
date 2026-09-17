@@ -13,6 +13,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.dp
 import java.util.concurrent.TimeUnit
+import kotlin.math.abs
 
 @Composable
 fun TimelineControls(
@@ -22,11 +23,13 @@ fun TimelineControls(
     clips: List<Clip>,
     canUndo: Boolean,
     canRedo: Boolean,
+    currentClipSpeed: Float,
     onSeek: (Long) -> Unit,
     onPlayPause: () -> Unit,
     onSplit: () -> Unit,
     onUndo: () -> Unit,
     onRedo: () -> Unit,
+    onSetSpeed: (Float) -> Unit,
     onTrimStartDragBegin: () -> Unit,
     onTrimStartDrag: (deltaMs: Long) -> Unit,
     onTrimStartDragEnd: () -> Unit,
@@ -177,6 +180,25 @@ fun TimelineControls(
                 Text("\u21B7", style = MaterialTheme.typography.titleLarge)
             }
         }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Speed presets for whichever clip the playhead is currently sitting in.
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            listOf(0.5f, 1f, 1.5f, 2f).forEach { speed ->
+                val selected = abs(currentClipSpeed - speed) < 0.01f
+                TextButton(onClick = { onSetSpeed(speed) }) {
+                    Text(
+                        text = formatSpeedLabel(speed),
+                        color = if (selected) Color(0xFF00E5A0) else Color.White,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -185,6 +207,11 @@ private fun formatTime(ms: Long): String {
     val minutes = totalSeconds / 60
     val seconds = totalSeconds % 60
     return String.format("%02d:%02d", minutes, seconds)
+}
+
+private fun formatSpeedLabel(speed: Float): String {
+    val trimmed = if (speed == speed.toLong().toFloat()) speed.toLong().toString() else speed.toString()
+    return "${trimmed}x"
 }
 
 @Composable
