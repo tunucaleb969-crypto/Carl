@@ -15,6 +15,8 @@ import androidx.compose.ui.unit.dp
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 
+private val ACCENT = Color(0xFF00E5A0)
+
 @Composable
 fun TimelineControls(
     positionMs: Long,
@@ -60,8 +62,8 @@ fun TimelineControls(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(formatTime(positionMs), style = MaterialTheme.typography.bodySmall)
-            Text(formatTime(durationMs), style = MaterialTheme.typography.bodySmall)
+            Text(formatTime(positionMs), color = Color.White, style = MaterialTheme.typography.bodySmall)
+            Text(formatTime(durationMs), color = Color.White, style = MaterialTheme.typography.bodySmall)
         }
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -109,7 +111,7 @@ fun TimelineControls(
                     .fillMaxWidth()
                     .height(6.dp)
                     .align(Alignment.CenterStart)
-                    .background(Color(0xFF00E5A0), RoundedCornerShape(3.dp))
+                    .background(ACCENT, RoundedCornerShape(3.dp))
             )
 
             // playhead
@@ -122,14 +124,15 @@ fun TimelineControls(
                     .background(Color.White, RoundedCornerShape(2.dp))
             )
 
-            // start trim handle (always the left edge of the timeline)
+            // start trim handle (always the left edge of the timeline) - drawn with a visible
+            // grip mark so it reads as a draggable control, not just a colored block
             Box(
                 modifier = Modifier
                     .offset(x = withDp(-8f))
                     .width(16.dp)
                     .height(40.dp)
                     .align(Alignment.CenterStart)
-                    .background(Color(0xFF00E5A0), RoundedCornerShape(4.dp))
+                    .background(ACCENT, RoundedCornerShape(4.dp))
                     .pointerInput(durationMs) {
                         detectDragGestures(
                             onDragStart = { onTrimStartDragBegin() },
@@ -139,16 +142,24 @@ fun TimelineControls(
                             onTrimStartDrag(pxDeltaToMsDelta(dragAmount.x))
                         }
                     }
-            )
+            ) {
+                Box(
+                    modifier = Modifier
+                        .width(3.dp)
+                        .height(20.dp)
+                        .align(Alignment.Center)
+                        .background(Color.Black.copy(alpha = 0.4f), RoundedCornerShape(1.5.dp))
+                )
+            }
 
-            // end trim handle (always the right edge of the timeline)
+            // end trim handle (always the right edge of the timeline) - same grip treatment
             Box(
                 modifier = Modifier
                     .offset(x = withDp(msToPx(durationMs) - 8f))
                     .width(16.dp)
                     .height(40.dp)
                     .align(Alignment.CenterStart)
-                    .background(Color(0xFF00E5A0), RoundedCornerShape(4.dp))
+                    .background(ACCENT, RoundedCornerShape(4.dp))
                     .pointerInput(durationMs) {
                         detectDragGestures(
                             onDragStart = { onTrimEndDragBegin() },
@@ -158,26 +169,48 @@ fun TimelineControls(
                             onTrimEndDrag(pxDeltaToMsDelta(dragAmount.x))
                         }
                     }
-            )
+            ) {
+                Box(
+                    modifier = Modifier
+                        .width(3.dp)
+                        .height(20.dp)
+                        .align(Alignment.Center)
+                        .background(Color.Black.copy(alpha = 0.4f), RoundedCornerShape(1.5.dp))
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(12.dp))
 
+        // Plain text labels instead of Unicode symbols - guaranteed to render on any device font,
+        // and explicit white color so they never depend on a theme default.
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            IconButton(onClick = onUndo, enabled = canUndo) {
-                Text("\u21B6", style = MaterialTheme.typography.titleLarge)
+            TextButton(onClick = onUndo, enabled = canUndo) {
+                Text(
+                    "Undo",
+                    color = if (canUndo) Color.White else Color.White.copy(alpha = 0.35f),
+                    style = MaterialTheme.typography.labelLarge
+                )
             }
-            IconButton(onClick = onPlayPause) {
-                Text(if (isPlaying) "\u23F8" else "\u25B6", style = MaterialTheme.typography.titleLarge)
+            TextButton(onClick = onPlayPause) {
+                Text(
+                    if (isPlaying) "Pause" else "Play",
+                    color = Color.White,
+                    style = MaterialTheme.typography.labelLarge
+                )
             }
-            IconButton(onClick = onSplit) {
-                Text("\u2702", style = MaterialTheme.typography.titleLarge)
+            TextButton(onClick = onSplit) {
+                Text("Split", color = Color.White, style = MaterialTheme.typography.labelLarge)
             }
-            IconButton(onClick = onRedo, enabled = canRedo) {
-                Text("\u21B7", style = MaterialTheme.typography.titleLarge)
+            TextButton(onClick = onRedo, enabled = canRedo) {
+                Text(
+                    "Redo",
+                    color = if (canRedo) Color.White else Color.White.copy(alpha = 0.35f),
+                    style = MaterialTheme.typography.labelLarge
+                )
             }
         }
 
@@ -193,7 +226,7 @@ fun TimelineControls(
                 TextButton(onClick = { onSetSpeed(speed) }) {
                     Text(
                         text = formatSpeedLabel(speed),
-                        color = if (selected) Color(0xFF00E5A0) else Color.White,
+                        color = if (selected) ACCENT else Color.White,
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
