@@ -204,6 +204,11 @@ fun PreviewScreen(uri: Uri) {
                         PlayerView(ctx).apply {
                             player = exoPlayer
                             resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+                            // We already have a full custom transport (play/pause, seek, split, trim)
+                            // in TimelineControls below - PlayerView's own default overlay (rewind/
+                            // forward/prev/next buttons) is redundant and looks like a generic media
+                            // player, not an editor. Disable it.
+                            useController = false
                         }
                     },
                     modifier = playerModifier
