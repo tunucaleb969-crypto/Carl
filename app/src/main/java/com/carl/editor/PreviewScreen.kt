@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
@@ -48,6 +49,14 @@ fun PreviewScreen(uri: Uri) {
     val displayClips = draftClips ?: committedClips
     val displayDurationMs = displayClips.sumOf { it.durationMs }
 
+    fun applySpeedForCurrentItem() {
+        val clips = history.present.clips
+        val itemIndex = exoPlayer.currentMediaItemIndex
+        if (itemIndex in clips.indices) {
+            exoPlayer.playbackParameters = PlaybackParameters(clips[itemIndex].speed)
+        }
+    }
+
     // Learn the source's real duration via MediaMetadataRetriever (cheap - no decoder spun up),
     // then seed a single full-length clip covering the whole video.
     LaunchedEffect(uri) {
@@ -68,7 +77,7 @@ fun PreviewScreen(uri: Uri) {
     }
 
     // Rebuild the ExoPlayer playlist whenever the committed clip list changes (split, trim commit,
-    // undo, redo) - never during a live drag, which only touches draftClips.
+    // undo, redo, speed change) - never during a live drag, which only touches draftClips.
     LaunchedEffect(committedClips) {
         if (committedClips.isEmpty()) return@LaunchedEffect
         val mediaItems = committedClips.map { clip ->
@@ -85,12 +94,17 @@ fun PreviewScreen(uri: Uri) {
         exoPlayer.setMediaItems(mediaItems)
         exoPlayer.prepare()
         exoPlayer.playWhenReady = isPlaying
+        applySpeedForCurrentItem()
     }
 
     DisposableEffect(Unit) {
         val listener = object : Player.Listener {
             override fun onIsPlayingChanged(playing: Boolean) {
                 isPlaying = playing
+            }
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                // Each clip may have its own speed - re-apply as playback crosses into the next one.
+                applySpeedForCurrentItem()
             }
         }
         exoPlayer.addListener(listener)
@@ -105,8 +119,12 @@ fun PreviewScreen(uri: Uri) {
             val clips = history.present.clips
             val itemIndex = exoPlayer.currentMediaItemIndex
             if (itemIndex in clips.indices) {
+                val clip = clips[itemIndex]
                 val elapsedBefore = history.present.clipStartOnTimeline(itemIndex)
-                positionMs = elapsedBefore + exoPlayer.currentPosition.coerceAtLeast(0L)
+                val sourcePositionMs = exoPlayer.currentPosition.coerceAtLeast(0L)
+                // currentPosition tracks source-space playback progress regardless of speed;
+                // convert back to timeline time by dividing out the clip's speed.
+                positionMs = elapsedBefore + (sourcePositionMs / clip.speed).toLong()
             }
             delay(200)
         }
@@ -118,12 +136,16 @@ fun PreviewScreen(uri: Uri) {
         var remaining = target.coerceIn(0L, clips.sumOf { it.durationMs })
         for ((index, clip) in clips.withIndex()) {
             if (remaining <= clip.durationMs) {
-                exoPlayer.seekTo(index, remaining)
+                val sourcePositionMs = (remaining * clip.speed).toLong()
+                exoPlayer.seekTo(index, sourcePositionMs)
+                applySpeedForCurrentItem()
                 return
             }
             remaining -= clip.durationMs
         }
-        exoPlayer.seekTo(clips.size - 1, clips.last().durationMs)
+        val lastIndex = clips.size - 1
+        exoPlayer.seekTo(lastIndex, clips.last().sourceDurationMs)
+        applySpeedForCurrentItem()
     }
 
     fun commitDraft() {
@@ -133,6 +155,11 @@ fun PreviewScreen(uri: Uri) {
             history = history.push(history.present.copy(clips = draft))
         }
     }
+
+    val currentClipSpeed = history.present.clipIndexAt(positionMs)
+        .takeIf { it >= 0 }
+        ?.let { history.present.clips[it].speed }
+        ?: 1f
 
     Surface(modifier = Modifier.fillMaxSize(), color = Color.Black) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -147,6 +174,7 @@ fun PreviewScreen(uri: Uri) {
                 clips = displayClips,
                 canUndo = history.canUndo,
                 canRedo = history.canRedo,
+                currentClipSpeed = currentClipSpeed,
                 onSeek = { seekTimelineMs(it) },
                 onPlayPause = {
                     if (exoPlayer.isPlaying) exoPlayer.pause() else exoPlayer.play()
@@ -156,12 +184,21 @@ fun PreviewScreen(uri: Uri) {
                 },
                 onUndo = { history = history.undo() },
                 onRedo = { history = history.redo() },
+                onSetSpeed = { speed ->
+                    val index = history.present.clipIndexAt(positionMs)
+                    if (index >= 0) {
+                        val clipId = history.present.clips[index].id
+                        history = history.push(history.present.withSpeed(clipId, speed))
+                    }
+                },
                 onTrimStartDragBegin = { draftClips = history.present.clips },
                 onTrimStartDrag = { deltaMs ->
                     draftClips = draftClips?.toMutableList()?.also { list ->
                         if (list.isNotEmpty()) {
                             val first = list.first()
-                            val newStart = (first.sourceStartMs + deltaMs)
+                            // deltaMs is timeline-space; convert to source-space via this clip's speed.
+                            val sourceDelta = (deltaMs * first.speed).toLong()
+                            val newStart = (first.sourceStartMs + sourceDelta)
                                 .coerceIn(0L, first.sourceEndMs - EditState.MIN_CLIP_MS)
                             list[0] = first.copy(sourceStartMs = newStart)
                         }
@@ -174,7 +211,8 @@ fun PreviewScreen(uri: Uri) {
                         if (list.isNotEmpty()) {
                             val lastIndex = list.size - 1
                             val last = list[lastIndex]
-                            val newEnd = (last.sourceEndMs + deltaMs)
+                            val sourceDelta = (deltaMs * last.speed).toLong()
+                            val newEnd = (last.sourceEndMs + sourceDelta)
                                 .coerceIn(last.sourceStartMs + EditState.MIN_CLIP_MS, sourceDurationMs)
                             list[lastIndex] = last.copy(sourceEndMs = newEnd)
                         }
