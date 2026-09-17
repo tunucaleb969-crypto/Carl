@@ -2,9 +2,14 @@ package com.carl.editor
 
 import android.media.MediaMetadataRetriever
 import android.net.Uri
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -15,6 +20,7 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -24,7 +30,10 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
+import com.carl.editor.canvas.CanvasControls
+import com.carl.editor.canvas.CanvasSettings
 import com.carl.editor.effects.GlobalTransform
 import com.carl.editor.effects.GlobalTransformControls
 import com.carl.editor.timeline.Clip
@@ -51,6 +60,9 @@ fun PreviewScreen(uri: Uri) {
     var draftClips by remember { mutableStateOf<List<Clip>?>(null) }
     // Whole-video rotate/flip - NOT per-clip (see GlobalTransform kdoc for why).
     var globalTransform by remember { mutableStateOf(GlobalTransform()) }
+    // Output frame: aspect ratio + background fill. Pure Compose layout, independent of
+    // globalTransform / ExoPlayer video effects.
+    var canvasSettings by remember { mutableStateOf(CanvasSettings()) }
 
     val committedClips = history.present.clips
     val displayClips = draftClips ?: committedClips
@@ -174,10 +186,29 @@ fun PreviewScreen(uri: Uri) {
 
     Surface(modifier = Modifier.fillMaxSize(), color = Color.Black) {
         Column(modifier = Modifier.fillMaxSize()) {
-            AndroidView(
-                factory = { ctx -> PlayerView(ctx).apply { player = exoPlayer } },
-                modifier = Modifier.weight(1f)
-            )
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .background(canvasSettings.backgroundColor),
+                contentAlignment = Alignment.Center
+            ) {
+                val ratio = canvasSettings.aspectRatio.ratio
+                val playerModifier = if (ratio != null) {
+                    Modifier.fillMaxHeight().aspectRatio(ratio, matchHeightConstraintsFirst = true)
+                } else {
+                    Modifier.fillMaxSize()
+                }
+                AndroidView(
+                    factory = { ctx ->
+                        PlayerView(ctx).apply {
+                            player = exoPlayer
+                            resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+                        }
+                    },
+                    modifier = playerModifier
+                )
+            }
             TimelineControls(
                 positionMs = positionMs,
                 durationMs = displayDurationMs,
@@ -241,6 +272,12 @@ fun PreviewScreen(uri: Uri) {
                 onToggleFlipVertical = {
                     globalTransform = globalTransform.copy(flipVertical = !globalTransform.flipVertical)
                 }
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            CanvasControls(
+                settings = canvasSettings,
+                onSelectAspectRatio = { preset -> canvasSettings = canvasSettings.copy(aspectRatio = preset) },
+                onSelectBackgroundColor = { color -> canvasSettings = canvasSettings.copy(backgroundColor = color) }
             )
         }
     }
