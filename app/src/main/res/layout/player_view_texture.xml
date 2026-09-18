@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    ExoPlayer.setVideoEffects() (used for our rotate/flip/color adjustments) reliably produces a
+    black preview with PlayerView's default SurfaceView - this is a well-documented Media3 bug
+    (see androidx/media issues #791, #1620, #1594), not something specific to Carl. The confirmed
+    fix is to use a TextureView instead. surface_type is an XML-only attribute (no Kotlin setter
+    exists), hence this small layout resource, inflated from PreviewScreen.kt.
+-->
+<androidx.media3.ui.PlayerView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/carl_player_view"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:surface_type="texture_view"
+    app:use_controller="false" />
