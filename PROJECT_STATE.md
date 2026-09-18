@@ -4,26 +4,36 @@
 - Name: Carl
 - Package: com.carl.editor
 - Version: 0.1.0
-- Current milestone: Redesign Phases 1+2+3 VERIFIED WORKING (app builds and runs). Visual polish is explicitly NOT there yet per direct user feedback ("doesn't look like a professional video editing app at all") — architecture is now right (theme/nav/contextual dock), presentation still looks amateur. This is the current focus, before Phase 4.
+- Current milestone: Visual polish pass IMPLEMENTED (icons + surface depth), unverified. Studied how professional mobile editors (CapCut and similar) achieve their look: icon-first controls, pill-styled primary actions, layered surface backgrounds — applied with Carl's own accent color, not a copied look. Next: get this built/tested before Phase 4.
 
 ## Verification status (VERIFIED / INSPECTED / EXPECTED / FAILED / BLOCKED)
-- VERIFIED (user confirmation, 2026-09-18): Phases 1+2+3 (theme, top bar, contextual tool dock) build and run on device. This is the first real confirmation since Phase 1 was implemented.
+- VERIFIED (user confirmation, 2026-09-18): Phases 1+2+3 (theme, top bar, contextual tool dock) build and run on device.
 - VERIFIED (device screenshot, earlier): pre-redesign trim/split/undo-redo/speed/rotate-flip/canvas/color all render and the default PlayerView overlay stays hidden.
+- EXPECTED, NOT BUILT: visual polish pass (icons + surface backgrounds, this round). Reasoned from a self-audit + research into professional editor UI conventions, but not yet compiled or run.
 - NOT YET VERIFIED: whether rotate/flip/sliders/canvas visually affect output when interacted with; whether they survive trim/split/undo/redo.
-- USER FEEDBACK (not a bug report, a design gap): app runs correctly but "doesn't look like a professional video editing app at all." No screenshot provided this round — asked for one to diagnose precisely rather than guessing at scale. Self-audit below lists the most likely concrete causes to fix regardless.
 
-## Self-audit: likely causes of the "not professional" look (pending screenshot confirmation)
-- NO ICONS ANYWHERE. Every control (top bar Back/Undo/Redo/Export, tool dock tabs, timeline Play/Split, speed presets) is a plain text TextButton. Real editors are icon-first with text as a secondary label. material-icons-extended is already a dependency (added early in the project) but has never actually been used — this is probably the single biggest visual gap.
-- Buttons have no visual weight — flat TextButtons with no background/chip/elevation, so nothing reads as a distinct "tool" vs. plain hyperlink-style text.
-- Timeline is a thin single-color bar with tick marks — functionally correct but visually reads as a slider/progress bar, not a timeline (this is already known and scheduled as Phase 4, not a quick fix).
-- Typography is still Typography() defaults (documented as deliberate in Theme.kt) — no distinctive type scale yet.
-- No spacing/elevation hierarchy between the top bar, preview, timeline, and tool dock sections — they likely blend together without visual separation (dividers, subtle surface elevation, etc.)
+## Visual polish pass (IMPLEMENTED, unverified) — "how did CapCut do it"
+Researched actual professional mobile editor UI patterns before changing anything (not copying CapCut's exact look — applying the same underlying interaction pattern with Carl's own accent green, per the "own identity" rule): icon-first controls instead of text links, a pill-shaped primary action for Export, icon+label bottom-dock tabs with an accent highlight on the active tab, and layered surface backgrounds separating chrome from the video canvas.
+- EditorTopBar.kt: Back/Undo/Redo are now icon buttons (Icons.AutoMirrored.Filled.ArrowBack, Icons.Filled.Undo/Redo); Export is a pill-shaped disabled button (icon + label) instead of plain disabled text; bar now has a surface (0xFF121212) background instead of blending into the black canvas
+- TimelineControls.kt: Play/Pause and Split are now icon buttons (PlayArrow/Pause/ContentCut); Column now has a surface background
+- ToolTab.kt: shortened "Rotate/Flip" label to "Transform" to fit under an icon
+- ToolDock.kt: tabs are now icon-over-label (RotateRight/AspectRatio/Tune icons), active tab gets a rounded accent-tinted highlight background instead of just colored text; dock has a surface background
+- GlobalTransformControls.kt: Rotate/Flip H/Flip V buttons now show an icon (RotateRight/Flip) alongside their text
+- Icon names verified against real, long-established Material icon identifiers before use (rotate_right, aspect_ratio, content_cut, tune, undo, redo, file_upload all confirmed to exist) — avoiding a repeat of the earlier @OptIn-style "looked right, didn't compile" mistake
+- material-icons-extended dependency (present since early in the project, previously unused) is now actually used
+- NOT YET BUILT OR TESTED
 
-## Redesign Phase 3: contextual tool dock (VERIFIED building/running; visual execution flagged as amateur, not yet fixed)
-- ToolTab.kt, ToolDock.kt, PreviewScreen.kt — architecture confirmed correct (one panel at a time replaces the old always-visible stack), but this only fixed information architecture, not visual polish
+## Self-audit findings from before this pass (now addressed above, pending verification)
+- No icons anywhere — addressed above
+- Buttons had no visual weight (flat text, no chip/background) — addressed via pill Export + accent-highlighted active tool tab
+- No spacing/elevation hierarchy between sections — partially addressed via surface backgrounds on top bar / timeline / tool dock (video canvas stays pure black, chrome is now a visibly distinct dark gray)
+- STILL NOT ADDRESSED: Timeline still reads as a thin slider bar, not a real timeline (Phase 4, thumbnails/waveform/zoom/scroll — bigger, separate effort). Typography still Material3 defaults.
 
-## Redesign Phase 2: navigation shell + top bar (VERIFIED building/running)
-- EditorTopBar.kt (Back, project name placeholder, Undo, Redo, Export-disabled), TimelineControls.kt (Undo/Redo removed), onBack wiring in PreviewScreen.kt/MainActivity.kt
+## Redesign Phase 3: contextual tool dock (VERIFIED building/running; now also has icons per above)
+- ToolTab.kt, ToolDock.kt, PreviewScreen.kt — architecture confirmed correct
+
+## Redesign Phase 2: navigation shell + top bar (VERIFIED building/running; now also has icons per above)
+- EditorTopBar.kt, TimelineControls.kt (Undo/Redo removed), onBack wiring in PreviewScreen.kt/MainActivity.kt
 - Real bug fixed: previously no way to leave the editor at all
 
 ## Redesign Phase 1: real theme system (VERIFIED building/running)
@@ -34,7 +44,7 @@
 - No real theme system existed — fixed (Phase 1)
 - No way back out of the editor — fixed (Phase 2)
 - Every tool panel always visible at once — fixed (Phase 3)
-- No icons anywhere, flat text-only controls — NEW finding this round, not yet fixed
+- No icons anywhere, flat text-only controls — fixed (visual polish pass above), pending verification
 - Timeline is a single bar, no thumbnails/waveform/zoom/scroll/tracks — Phase 4, not started
 - No persistence, no real project name, no export pipeline — later phases, not started
 
@@ -49,11 +59,11 @@
 - Phase 9 step 2: whole-video rotate/flip; step 3: canvas/aspect ratio + background color; step 4: brightness/contrast/saturation
 
 ## Redesign scope (from uploaded brief) — full plan
-1. Real theme — DONE (verified building/running)
-2. Navigation shell + top bar — DONE (verified building/running)
-3. Contextual tool-dock architecture — DONE (verified building/running)
-3.5 VISUAL POLISH PASS — IN PROGRESS (current focus): icons via material-icons-extended, button chip styling, spacing/elevation hierarchy
-4. Timeline v2 (thumbnails, zoom, scroll) — next after polish
+1. Real theme — DONE (verified)
+2. Navigation shell + top bar — DONE (verified)
+3. Contextual tool-dock architecture — DONE (verified)
+3.5 Visual polish pass (icons, surface depth) — DONE, unverified (this round)
+4. Timeline v2 (thumbnails, zoom, scroll) — next after this is verified
 5+. Audio, text, stickers, effects, filters, transitions, keyframes, captions, real export (Transformer), persistence, accessibility, performance, error handling
 Biggest structural gap: no CompositionPlayer/Transformer yet — per-clip visual effects, real export, and transitions will need one or both; flagged, not yet decided.
 
@@ -69,7 +79,8 @@ Biggest structural gap: no CompositionPlayer/Transformer yet — per-clip visual
 - PlayerView's default controller overlay stays disabled
 - Keeping PROJECT_STATE.md name and Phase-numbering, per explicit instruction
 - Visible-but-disabled is the pattern for not-yet-implemented controls, never a button wired to do nothing
-- NEW: material-icons-extended dependency exists but is unused — next visual-polish step should actually use it instead of plain text labels
+- NEW: icon usage established (material-icons-extended) — icon-first pattern for transport/tab controls, text-first still fine for numeric presets (speed) and body copy
+- NEW: surface background (0xFF121212) used to visually separate chrome (top bar, timeline, tool dock) from the pure-black video canvas
 
 ## Current next step
-Get a screenshot of the current app to diagnose the "not professional" look precisely (worked well twice before for finding concrete, fixable issues). In parallel, the self-audit above already identifies the most likely fix: replace plain TextButton text labels with icon+label controls (top bar, tool dock tabs, timeline transport) using the already-present material-icons-extended dependency, plus basic chip/elevation styling for visual weight. This is presentational only — low regression risk to existing working functionality.
+Build and verify the visual polish pass on device. Specifically check: do the new icons actually render (icon names were verified against real Material icon identifiers, but this hasn't been compiled yet), does the top bar/timeline/tool dock now read as distinct "chrome" against the black preview, does the pill-styled Export button look right, does the active tool tab's highlight look right. A screenshot would be ideal to confirm before moving to Phase 4.
