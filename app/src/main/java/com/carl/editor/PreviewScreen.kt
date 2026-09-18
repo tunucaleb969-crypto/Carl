@@ -234,6 +234,7 @@ fun PreviewScreen(uri: Uri, onBack: () -> Unit) {
                 )
             }
             TimelineControls(
+                uri = uri,
                 positionMs = positionMs,
                 durationMs = displayDurationMs,
                 isPlaying = isPlaying,
