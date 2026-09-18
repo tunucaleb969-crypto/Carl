@@ -6,12 +6,10 @@ import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -25,7 +23,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackParameters
@@ -34,12 +31,9 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
-import com.carl.editor.canvas.CanvasControls
 import com.carl.editor.canvas.CanvasSettings
 import com.carl.editor.effects.ColorAdjustment
-import com.carl.editor.effects.ColorAdjustmentControls
 import com.carl.editor.effects.GlobalTransform
-import com.carl.editor.effects.GlobalTransformControls
 import com.carl.editor.timeline.Clip
 import com.carl.editor.timeline.EditHistory
 import com.carl.editor.timeline.EditState
@@ -75,6 +69,9 @@ fun PreviewScreen(uri: Uri, onBack: () -> Unit) {
     // Output frame: aspect ratio + background fill. Pure Compose layout, independent of
     // globalTransform / colorAdjustment / ExoPlayer video effects.
     var canvasSettings by remember { mutableStateOf(CanvasSettings()) }
+    // Which contextual tool panel is shown below the timeline (redesign Phase 3) - only one at
+    // a time, replacing the previous always-visible vertical stack of all three panels.
+    var selectedTool by remember { mutableStateOf<ToolTab?>(null) }
 
     val committedClips = history.present.clips
     val displayClips = draftClips ?: committedClips
@@ -285,30 +282,25 @@ fun PreviewScreen(uri: Uri, onBack: () -> Unit) {
                 },
                 onTrimEndDragEnd = { commitDraft() }
             )
-            Spacer(modifier = Modifier.height(8.dp))
-            GlobalTransformControls(
-                transform = globalTransform,
+            ToolDock(
+                selectedTool = selectedTool,
+                onSelectTool = { selectedTool = it },
+                globalTransform = globalTransform,
                 onRotate = { globalTransform = globalTransform.rotatedClockwise() },
                 onToggleFlipHorizontal = {
                     globalTransform = globalTransform.copy(flipHorizontal = !globalTransform.flipHorizontal)
                 },
                 onToggleFlipVertical = {
                     globalTransform = globalTransform.copy(flipVertical = !globalTransform.flipVertical)
-                }
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            CanvasControls(
-                settings = canvasSettings,
+                },
+                canvasSettings = canvasSettings,
                 onSelectAspectRatio = { preset -> canvasSettings = canvasSettings.copy(aspectRatio = preset) },
-                onSelectBackgroundColor = { color -> canvasSettings = canvasSettings.copy(backgroundColor = color) }
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            ColorAdjustmentControls(
-                adjustment = colorAdjustment,
+                onSelectBackgroundColor = { color -> canvasSettings = canvasSettings.copy(backgroundColor = color) },
+                colorAdjustment = colorAdjustment,
                 onBrightnessChange = { colorAdjustment = colorAdjustment.copy(brightness = it) },
                 onContrastChange = { colorAdjustment = colorAdjustment.copy(contrast = it) },
                 onSaturationChange = { colorAdjustment = colorAdjustment.copy(saturation = it) },
-                onReset = { colorAdjustment = ColorAdjustment() }
+                onResetColor = { colorAdjustment = ColorAdjustment() }
             )
         }
     }
