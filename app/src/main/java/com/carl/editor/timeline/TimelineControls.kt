@@ -23,14 +23,10 @@ fun TimelineControls(
     durationMs: Long,
     isPlaying: Boolean,
     clips: List<Clip>,
-    canUndo: Boolean,
-    canRedo: Boolean,
     currentClipSpeed: Float,
     onSeek: (Long) -> Unit,
     onPlayPause: () -> Unit,
     onSplit: () -> Unit,
-    onUndo: () -> Unit,
-    onRedo: () -> Unit,
     onSetSpeed: (Float) -> Unit,
     onTrimStartDragBegin: () -> Unit,
     onTrimStartDrag: (deltaMs: Long) -> Unit,
@@ -182,19 +178,12 @@ fun TimelineControls(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Plain text labels instead of Unicode symbols - guaranteed to render on any device font,
-        // and explicit white color so they never depend on a theme default.
+        // Undo/Redo moved to EditorTopBar (redesign Phase 2) - this row now only holds
+        // Play/Pause and Split, to avoid duplicate controls for the same actions.
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            TextButton(onClick = onUndo, enabled = canUndo) {
-                Text(
-                    "Undo",
-                    color = if (canUndo) Color.White else Color.White.copy(alpha = 0.35f),
-                    style = MaterialTheme.typography.labelLarge
-                )
-            }
             TextButton(onClick = onPlayPause) {
                 Text(
                     if (isPlaying) "Pause" else "Play",
@@ -204,13 +193,6 @@ fun TimelineControls(
             }
             TextButton(onClick = onSplit) {
                 Text("Split", color = Color.White, style = MaterialTheme.typography.labelLarge)
-            }
-            TextButton(onClick = onRedo, enabled = canRedo) {
-                Text(
-                    "Redo",
-                    color = if (canRedo) Color.White else Color.White.copy(alpha = 0.35f),
-                    style = MaterialTheme.typography.labelLarge
-                )
             }
         }
 
