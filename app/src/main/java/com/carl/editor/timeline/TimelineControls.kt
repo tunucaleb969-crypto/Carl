@@ -1,5 +1,6 @@
 package com.carl.editor.timeline
 
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
@@ -12,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -21,9 +23,11 @@ import kotlin.math.abs
 
 private val ACCENT = Color(0xFF00E5A0)
 private val SURFACE = Color(0xFF121212)
+private const val THUMBNAILS_PER_CLIP = 6
 
 @Composable
 fun TimelineControls(
+    uri: Uri,
     positionMs: Long,
     durationMs: Long,
     isPlaying: Boolean,
@@ -72,7 +76,7 @@ fun TimelineControls(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(48.dp)
+                .height(56.dp)
                 .pointerInput(durationMs) {
                     detectDragGestures { change, _ ->
                         onSeek(pxToMs(change.position.x))
@@ -82,16 +86,31 @@ fun TimelineControls(
                     trackWidthPx = coords.size.width.toFloat()
                 }
         ) {
-            // background track
-            Box(
+            // Clip filmstrip - each clip's width is proportional to its share of the timeline
+            // (via Row weight, matching how durationMs already sums proportionally). Replaces the
+            // old flat colored bar with real preview frames, so this reads as an actual video
+            // timeline instead of a slider.
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(6.dp)
+                    .height(40.dp)
                     .align(Alignment.CenterStart)
-                    .background(Color.DarkGray, RoundedCornerShape(3.dp))
-            )
+                    .clip(RoundedCornerShape(4.dp))
+            ) {
+                clips.forEach { clip ->
+                    ClipThumbnailStrip(
+                        uri = uri,
+                        clip = clip,
+                        thumbnailCount = THUMBNAILS_PER_CLIP,
+                        modifier = Modifier
+                            .weight(clip.durationMs.toFloat().coerceAtLeast(1f))
+                            .fillMaxHeight()
+                    )
+                }
+            }
 
-            // clip boundary markers (one per cut point between clips)
+            // clip boundary markers (one per cut point between clips) - drawn on top of the
+            // filmstrip so cut points stay visually clear even when adjacent clips look similar
             var elapsed = 0L
             for (clip in clips.dropLast(1)) {
                 elapsed += clip.durationMs
@@ -100,27 +119,18 @@ fun TimelineControls(
                     modifier = Modifier
                         .offset(x = withDp(boundaryPx - 1f))
                         .width(2.dp)
-                        .height(24.dp)
+                        .height(40.dp)
                         .align(Alignment.CenterStart)
                         .background(Color.White)
                 )
             }
-
-            // active range fill (always the full current duration, since trimming is edge-based now)
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(6.dp)
-                    .align(Alignment.CenterStart)
-                    .background(ACCENT, RoundedCornerShape(3.dp))
-            )
 
             // playhead
             Box(
                 modifier = Modifier
                     .offset(x = withDp(msToPx(positionMs) - 2f))
                     .width(4.dp)
-                    .height(32.dp)
+                    .height(48.dp)
                     .align(Alignment.CenterStart)
                     .background(Color.White, RoundedCornerShape(2.dp))
             )
@@ -131,7 +141,7 @@ fun TimelineControls(
                 modifier = Modifier
                     .offset(x = withDp(-8f))
                     .width(16.dp)
-                    .height(40.dp)
+                    .height(48.dp)
                     .align(Alignment.CenterStart)
                     .background(ACCENT, RoundedCornerShape(4.dp))
                     .pointerInput(durationMs) {
@@ -147,7 +157,7 @@ fun TimelineControls(
                 Box(
                     modifier = Modifier
                         .width(3.dp)
-                        .height(20.dp)
+                        .height(24.dp)
                         .align(Alignment.Center)
                         .background(Color.Black.copy(alpha = 0.4f), RoundedCornerShape(1.5.dp))
                 )
@@ -158,7 +168,7 @@ fun TimelineControls(
                 modifier = Modifier
                     .offset(x = withDp(msToPx(durationMs) - 8f))
                     .width(16.dp)
-                    .height(40.dp)
+                    .height(48.dp)
                     .align(Alignment.CenterStart)
                     .background(ACCENT, RoundedCornerShape(4.dp))
                     .pointerInput(durationMs) {
@@ -174,7 +184,7 @@ fun TimelineControls(
                 Box(
                     modifier = Modifier
                         .width(3.dp)
-                        .height(20.dp)
+                        .height(24.dp)
                         .align(Alignment.Center)
                         .background(Color.Black.copy(alpha = 0.4f), RoundedCornerShape(1.5.dp))
                 )
