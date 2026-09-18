@@ -4,6 +4,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ContentCut
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,6 +20,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 
 private val ACCENT = Color(0xFF00E5A0)
+private val SURFACE = Color(0xFF121212)
 
 @Composable
 fun TimelineControls(
@@ -53,7 +58,7 @@ fun TimelineControls(
         return (ms.toFloat() / durationMs) * trackWidthPx
     }
 
-    Column(modifier = modifier.fillMaxWidth().padding(16.dp)) {
+    Column(modifier = modifier.fillMaxWidth().background(SURFACE).padding(16.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
@@ -179,20 +184,21 @@ fun TimelineControls(
         Spacer(modifier = Modifier.height(12.dp))
 
         // Undo/Redo moved to EditorTopBar (redesign Phase 2) - this row now only holds
-        // Play/Pause and Split, to avoid duplicate controls for the same actions.
+        // Play/Pause and Split, to avoid duplicate controls for the same actions. Icon buttons
+        // instead of text labels - transport controls are universally icon-recognized.
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            TextButton(onClick = onPlayPause) {
-                Text(
-                    if (isPlaying) "Pause" else "Play",
-                    color = Color.White,
-                    style = MaterialTheme.typography.labelLarge
+            IconButton(onClick = onPlayPause) {
+                Icon(
+                    if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                    contentDescription = if (isPlaying) "Pause" else "Play",
+                    tint = Color.White
                 )
             }
-            TextButton(onClick = onSplit) {
-                Text("Split", color = Color.White, style = MaterialTheme.typography.labelLarge)
+            IconButton(onClick = onSplit) {
+                Icon(Icons.Filled.ContentCut, contentDescription = "Split", tint = Color.White)
             }
         }
 
