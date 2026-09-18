@@ -6,7 +6,7 @@ package com.carl.editor
  * Rotate/Flip + Canvas + Color panels.
  */
 enum class ToolTab(val label: String) {
-    TRANSFORM("Rotate/Flip"),
+    TRANSFORM("Transform"),
     CANVAS("Canvas"),
     COLOR("Color")
 }
