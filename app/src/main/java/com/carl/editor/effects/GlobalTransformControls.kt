@@ -7,6 +7,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Flip
+import androidx.compose.material.icons.filled.RotateRight
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -41,22 +45,33 @@ fun GlobalTransformControls(
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             TextButton(onClick = onRotate) {
+                Icon(Icons.Filled.RotateRight, contentDescription = null, tint = Color.White)
                 Text(
-                    "Rotate \u2022 ${transform.rotationDegrees.toInt()}\u00b0",
+                    " ${transform.rotationDegrees.toInt()}\u00b0",
                     color = Color.White,
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
             TextButton(onClick = onToggleFlipHorizontal) {
+                Icon(
+                    Icons.Filled.Flip,
+                    contentDescription = null,
+                    tint = if (transform.flipHorizontal) ACCENT else Color.White
+                )
                 Text(
-                    "Flip H",
+                    " Flip H",
                     color = if (transform.flipHorizontal) ACCENT else Color.White,
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
             TextButton(onClick = onToggleFlipVertical) {
+                Icon(
+                    Icons.Filled.Flip,
+                    contentDescription = null,
+                    tint = if (transform.flipVertical) ACCENT else Color.White
+                )
                 Text(
-                    "Flip V",
+                    " Flip V",
                     color = if (transform.flipVertical) ACCENT else Color.White,
                     style = MaterialTheme.typography.bodyMedium
                 )
