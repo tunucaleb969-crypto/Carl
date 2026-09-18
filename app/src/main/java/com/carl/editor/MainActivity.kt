@@ -35,7 +35,10 @@ class MainActivity : ComponentActivity() {
                         }
                     )
                 } else {
-                    PreviewScreen(uri = videoUri!!)
+                    PreviewScreen(
+                        uri = videoUri!!,
+                        onBack = { videoUri = null }
+                    )
                 }
             }
         }
