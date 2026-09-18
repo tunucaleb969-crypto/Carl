@@ -55,7 +55,7 @@ import kotlinx.coroutines.withContext
 // effect-building side.
 @OptIn(UnstableApi::class)
 @Composable
-fun PreviewScreen(uri: Uri) {
+fun PreviewScreen(uri: Uri, onBack: () -> Unit) {
     val context = LocalContext.current
     val exoPlayer = remember {
         ExoPlayer.Builder(context).build().apply { playWhenReady = true }
@@ -199,6 +199,15 @@ fun PreviewScreen(uri: Uri) {
 
     Surface(modifier = Modifier.fillMaxSize(), color = Color.Black) {
         Column(modifier = Modifier.fillMaxSize()) {
+            // Project naming/persistence doesn't exist yet - placeholder name for now.
+            EditorTopBar(
+                projectName = "Untitled Project",
+                canUndo = history.canUndo,
+                canRedo = history.canRedo,
+                onBack = onBack,
+                onUndo = { history = history.undo() },
+                onRedo = { history = history.redo() }
+            )
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -232,8 +241,6 @@ fun PreviewScreen(uri: Uri) {
                 durationMs = displayDurationMs,
                 isPlaying = isPlaying,
                 clips = displayClips,
-                canUndo = history.canUndo,
-                canRedo = history.canRedo,
                 currentClipSpeed = currentClipSpeed,
                 onSeek = { seekTimelineMs(it) },
                 onPlayPause = {
@@ -242,8 +249,6 @@ fun PreviewScreen(uri: Uri) {
                 onSplit = {
                     history = history.push(history.present.splitAt(positionMs))
                 },
-                onUndo = { history = history.undo() },
-                onRedo = { history = history.redo() },
                 onSetSpeed = { speed ->
                     val index = history.present.clipIndexAt(positionMs)
                     if (index >= 0) {
