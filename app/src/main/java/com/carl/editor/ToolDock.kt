@@ -1,16 +1,25 @@
 package com.carl.editor
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AspectRatio
+import androidx.compose.material.icons.filled.RotateRight
+import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.carl.editor.canvas.AspectRatioPreset
 import com.carl.editor.canvas.CanvasControls
@@ -21,12 +30,19 @@ import com.carl.editor.effects.GlobalTransform
 import com.carl.editor.effects.GlobalTransformControls
 
 private val ACCENT = Color(0xFF00E5A0)
+private val SURFACE = Color(0xFF121212)
+
+private fun iconFor(tab: ToolTab): ImageVector = when (tab) {
+    ToolTab.TRANSFORM -> Icons.Filled.RotateRight
+    ToolTab.CANVAS -> Icons.Filled.AspectRatio
+    ToolTab.COLOR -> Icons.Filled.Tune
+}
 
 /**
- * Contextual tool dock: a row of tabs (Transform/Canvas/Color), with only the selected tab's
- * panel visible below it. Replaces the previous always-visible vertical stack of all three
- * panels (the direct cause of the "looks like a settings screen" complaint). Tapping the
- * already-active tab again collapses the dock (selectedTool becomes null).
+ * Contextual tool dock: icon+label tabs (Transform/Canvas/Color), with only the selected tab's
+ * panel visible below it. Icon-over-label tabs with an accent-tinted rounded highlight on the
+ * active tab is the standard bottom-dock pattern professional mobile editors use - applied here
+ * with Carl's own accent color, not a copied look.
  *
  * Reuses the existing GlobalTransformControls / CanvasControls / ColorAdjustmentControls
  * composables unchanged - only how/when they're shown has changed, not their internals.
@@ -49,18 +65,32 @@ fun ToolDock(
     onResetColor: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier.fillMaxWidth()) {
+    Column(modifier = modifier.fillMaxWidth().background(SURFACE)) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+            modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             ToolTab.values().forEach { tab ->
                 val selected = selectedTool == tab
-                TextButton(onClick = { onSelectTool(if (selected) null else tab) }) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .clickable { onSelectTool(if (selected) null else tab) }
+                        .background(
+                            if (selected) ACCENT.copy(alpha = 0.15f) else Color.Transparent,
+                            RoundedCornerShape(12.dp)
+                        )
+                        .padding(horizontal = 16.dp, vertical = 6.dp)
+                ) {
+                    Icon(
+                        iconFor(tab),
+                        contentDescription = tab.label,
+                        tint = if (selected) ACCENT else Color.White
+                    )
                     Text(
                         tab.label,
                         color = if (selected) ACCENT else Color.White,
-                        style = MaterialTheme.typography.labelLarge
+                        style = MaterialTheme.typography.labelSmall
                     )
                 }
             }
