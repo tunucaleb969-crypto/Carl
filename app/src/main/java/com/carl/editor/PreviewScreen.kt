@@ -2,6 +2,7 @@ package com.carl.editor
 
 import android.media.MediaMetadataRetriever
 import android.net.Uri
+import android.view.LayoutInflater
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -220,13 +221,21 @@ fun PreviewScreen(uri: Uri, onBack: () -> Unit) {
                 }
                 AndroidView(
                     factory = { ctx ->
-                        PlayerView(ctx).apply {
+                        // Inflate from XML rather than constructing PlayerView(ctx) directly: this
+                        // is the only way to set surface_type=texture_view, which is required to
+                        // avoid a well-documented Media3 bug where setVideoEffects() produces a
+                        // black preview with the default SurfaceView (see
+                        // R.layout.player_view_texture for the full explanation).
+                        val playerView = LayoutInflater.from(ctx)
+                            .inflate(R.layout.player_view_texture, null) as PlayerView
+                        playerView.apply {
                             player = exoPlayer
                             resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
                             // We already have a full custom transport (play/pause, seek, split, trim)
                             // in TimelineControls below - PlayerView's own default overlay (rewind/
                             // forward/prev/next buttons) is redundant and looks like a generic media
-                            // player, not an editor. Disable it.
+                            // player, not an editor. Disable it (also set in the XML, kept here too
+                            // for clarity/defensiveness).
                             useController = false
                         }
                     },
