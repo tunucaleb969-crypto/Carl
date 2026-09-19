@@ -4,59 +4,64 @@
 - Name: Carl
 - Package: com.carl.editor
 - Version: 0.1.0
-- Current milestone: FIRST BUILD FAILURE of this project, caught via CI log screenshot, fixed. A second CI build result is now needed to confirm the fix worked.
+- Current milestone: Black-preview bug found (well-documented Media3 issue) and fixed; error surfacing added. THREE unverified changes now stacked (TextureView fix, error banner, plus everything from the visual-polish/thumbnails round before it) — a build + device check is overdue and the top priority.
 
 ## Verification status (VERIFIED / INSPECTED / EXPECTED / FAILED / BLOCKED)
 - VERIFIED (user confirmation, 2026-09-18): Phases 1+2+3 (theme, top bar, contextual tool dock) build and run on device.
-- VERIFIED (device screenshot, earlier): pre-redesign trim/split/undo-redo/speed/rotate-flip/canvas/color all render and the default PlayerView overlay stays hidden.
-- FAILED (CI build log screenshot, 2026-09-18): `:app:compileDebugKotlin` FAILED. Two identical errors in timeline/ClipThumbnailStrip.kt (lines 17 and 51): `Unresolved reference: ContentScale`. Root cause: wrong import - `androidx.compose.ui.graphics.ContentScale` doesn't exist, the real package is `androidx.compose.ui.layout.ContentScale`. FIXED in ClipThumbnailStrip.kt (import corrected), not yet reconfirmed with a new build.
-- The visual polish pass (icons) was NOT implicated in this failure - the bug was isolated to the newer, more complex Phase 4a thumbnail code, exactly as flagged as higher-risk beforehand.
-- STILL EXPECTED, NOT CONFIRMED: visual polish pass (icons + surface backgrounds) - never got a clean build to verify against, since the build failed on an unrelated file. Will be covered by the next build attempt.
-- NOT YET VERIFIED: whether rotate/flip/sliders/canvas visually affect output when interacted with; whether they survive trim/split/undo/redo.
+- VERIFIED (device screenshot, earlier): pre-redesign trim/split/undo-redo/speed/rotate-flip/canvas/color all render; default PlayerView overlay stays hidden.
+- VERIFIED (device screenshot, 2026-09-18 later): visual polish (icons, pill Export, tool-dock tabs) and Phase 4a thumbnails all RENDER correctly — confirms the ContentScale build fix worked.
+- FAILED, THEN DIAGNOSED (device screenshot, 2026-09-18): video preview area was entirely black while adjusting Brightness/Contrast/Saturation sliders. Root cause identified via research: this is a well-documented Media3 bug (androidx/media issues #791, #1620, #1594) — ExoPlayer.setVideoEffects() reliably produces a black screen with PlayerView's default SurfaceView, even with an empty effects list. NOT specific to Carl's code.
+- FIX APPLIED, NOT YET VERIFIED: PlayerView now inflated from a new XML layout (res/layout/player_view_texture.xml) with surface_type="texture_view" instead of constructed directly in Kotlin — this is the documented, community-confirmed workaround (surface_type has no Kotlin setter, hence the XML resource). PreviewScreen.kt updated to inflate via LayoutInflater.
+- ALSO ADDED, NOT YET VERIFIED: playback error surfacing — a Player.Listener.onPlayerError override now shows a visible banner over the preview instead of failing silently (previously any ExoPlayer error, including a black-screen scenario, would show nothing to the user).
+- NOT YET VERIFIED: whether the TextureView fix actually resolves the black screen; whether rotate/flip/sliders/canvas visually affect output now that video is (hopefully) visible; whether they survive trim/split/undo/redo.
 
-## Build failure #1 (found and fixed)
-- Error: `e: file:///.../ClipThumbnailStrip.kt:17:37 Unresolved reference: ContentScale` (and again at line 51)
-- Cause: imported `androidx.compose.ui.graphics.ContentScale` instead of the correct `androidx.compose.ui.layout.ContentScale`
-- Fix: corrected the import in ClipThumbnailStrip.kt. No other files touched - the rest of Phase 4a (ThumbnailCache.kt, TimelineControls.kt, PreviewScreen.kt) was untouched by this fix since the error was isolated to one bad import in one file.
-- NOT YET RE-VERIFIED - needs a fresh CI build to confirm this was the only problem.
+## Black-preview bug (found, fixed, unverified)
+- Symptom: full black rectangle where video should be, while trim/timeline/effects UI all rendered correctly around it
+- Cause: ExoPlayer.setVideoEffects() + PlayerView's default SurfaceView — confirmed via multiple official Google issue reports, not a Carl-specific mistake
+- Fix: NEW res/layout/player_view_texture.xml (PlayerView with surface_type="texture_view", use_controller="false"); PreviewScreen.kt now inflates this via LayoutInflater instead of `PlayerView(ctx)` directly
+- Tradeoff accepted: TextureView uses more power than SurfaceView and loses some capabilities (HDR, secure DRM output) — acceptable for an editor preview, not final playback
+- NOT YET BUILT OR TESTED
 
-## Phase 4a: timeline thumbnails (fix applied, re-verification pending)
-Split "Timeline v2" into 4a (thumbnails) and 4b (zoom/scroll, later).
-- timeline/ThumbnailCache.kt — generates small (96x96px) preview frames via MediaMetadataRetriever.getScaledFrameAtTime (API 27+, manual-downscale getFrameAtTime fallback for API 26); in-memory cache keyed by clip identity
-- timeline/ClipThumbnailStrip.kt — renders one clip's filmstrip; FIXED import bug (ContentScale)
-- timeline/TimelineControls.kt — replaced the flat colored bar with a Row of ClipThumbnailStrip per clip, sized via Modifier.weight(clip.durationMs); takes a `uri: Uri` parameter now
-- PreviewScreen.kt — passes `uri` into TimelineControls
-- Deliberately conservative for the 2GB Tecno Spark 5: 6 thumbnails per clip, 96px bitmaps, cached
-- Zoom/scroll (Phase 4b) NOT included in this step
+## Error surfacing (added, unverified)
+- PreviewScreen.kt: new `playerErrorMessage` state, set via `Player.Listener.onPlayerError`, cleared when playback resumes successfully; shown as a visible banner over the preview
+- Motivation: per explicit "never fail silently" rules in the uploaded master prompts — a real, current gap (any ExoPlayer error, including black-screen scenarios, previously showed nothing)
+- NOT YET BUILT OR TESTED
 
-## Visual polish pass (implemented, still unconfirmed by a clean build)
-Icon-first controls, pill-shaped Export, icon+label tool-dock tabs with accent highlight, surface backgrounds. Icon names (rotate_right, aspect_ratio, content_cut, tune, undo, redo, file_upload) verified against real Material identifiers before use - none of these were implicated in the build failure above.
+## Build failure #1 (found and fixed, since verified working)
+- `:app:compileDebugKotlin` failed: `Unresolved reference: ContentScale` in ClipThumbnailStrip.kt (wrong import: androidx.compose.ui.graphics.ContentScale instead of androidx.compose.ui.layout.ContentScale)
+- Fixed, and confirmed via a later screenshot that thumbnails now render correctly — this one IS verified
+
+## Phase 4a: timeline thumbnails (VERIFIED rendering, per screenshot)
+- timeline/ThumbnailCache.kt, timeline/ClipThumbnailStrip.kt, timeline/TimelineControls.kt (takes `uri: Uri`), PreviewScreen.kt
+- Conservative for the 2GB Tecno Spark 5: 6 thumbnails per clip, 96px bitmaps, cached
+- Zoom/scroll (Phase 4b) NOT included
+
+## Visual polish pass (VERIFIED rendering, per screenshot)
+Icon-first controls, pill-shaped Export, icon+label tool-dock tabs with accent highlight, surface backgrounds — confirmed rendering correctly via device screenshot.
 - EditorTopBar.kt, TimelineControls.kt, ToolTab.kt, ToolDock.kt, GlobalTransformControls.kt
-- material-icons-extended dependency (present since early, previously unused) now actually used
+- material-icons-extended dependency now actually used
 
 ## Self-audit findings (status)
-- No icons anywhere — addressed (pending clean-build confirmation)
-- Buttons had no visual weight — addressed (pending)
-- No spacing/elevation hierarchy — partially addressed (pending)
-- Timeline read as a thin slider — addressed via Phase 4a thumbnails (pending); zoom/scroll still pending (4b)
+- No icons anywhere — fixed, VERIFIED rendering
+- Buttons had no visual weight — fixed, VERIFIED rendering
+- No spacing/elevation hierarchy — partially addressed, VERIFIED rendering
+- Timeline read as a thin slider — fixed via Phase 4a thumbnails, VERIFIED rendering; zoom/scroll still pending (4b)
 - Typography still Material3 defaults — not addressed, no plan yet
+- NEW: video preview itself was invisible (black) — root-caused and fixed, UNVERIFIED
 
-## Redesign Phase 3: contextual tool dock (VERIFIED building/running; now also has icons, pending re-confirmation)
-- ToolTab.kt, ToolDock.kt, PreviewScreen.kt — architecture confirmed correct
-
-## Redesign Phase 2: navigation shell + top bar (VERIFIED building/running; now also has icons, pending re-confirmation)
-- EditorTopBar.kt, TimelineControls.kt (Undo/Redo removed), onBack wiring
+## Redesign Phase 3: contextual tool dock (VERIFIED building/running + rendering with icons)
+## Redesign Phase 2: navigation shell + top bar (VERIFIED building/running + rendering with icons)
 - Real bug fixed: previously no way to leave the editor at all
-
 ## Redesign Phase 1: real theme system (VERIFIED building/running)
-- ui/theme/Theme.kt (CarlTheme, real darkColorScheme), wired into MainActivity.kt
 
 ## Fresh repo inspection findings (earlier this session)
 - No real theme system existed — fixed (Phase 1)
 - No way back out of the editor — fixed (Phase 2)
 - Every tool panel always visible at once — fixed (Phase 3)
-- No icons anywhere, flat text-only controls — fixed (visual polish pass), pending re-confirmation
-- Timeline was a single flat bar — fixed (Phase 4a), pending re-confirmation; zoom/scroll still pending (4b)
+- No icons anywhere — fixed (visual polish pass), VERIFIED rendering
+- Timeline was a single flat bar — fixed (Phase 4a), VERIFIED rendering; zoom/scroll still pending (4b)
+- Video preview showed black during effects use — fixed (TextureView), UNVERIFIED
+- Errors failed silently — fixed (error banner), UNVERIFIED
 - No persistence, no real project name, no export pipeline — later phases, not started
 
 ## Completed (device-confirmed functionality, pre-redesign)
@@ -66,16 +71,14 @@ Icon-first controls, pill-shaped Export, icon+label tool-dock tabs with accent h
 - Phase 8: trim/split/undo-redo; Phase 9 step 1: per-clip speed
 - Invisible-controls bug — fixed, confirmed; PlayerView default overlay — disabled, confirmed hidden
 
-## Implemented, renders correctly (per screenshot), behavior not yet exercised
-- Phase 9 step 2: whole-video rotate/flip; step 3: canvas/aspect ratio + background color; step 4: brightness/contrast/saturation
-
-## Redesign scope (from uploaded brief) — full plan
+## Redesign scope (from uploaded briefs) — full plan
 1. Real theme — DONE (verified)
 2. Navigation shell + top bar — DONE (verified)
 3. Contextual tool-dock architecture — DONE (verified)
-3.5 Visual polish pass (icons, surface depth) — DONE, pending re-confirmation after build fix
-4a. Timeline thumbnails — DONE, build error found+fixed, pending re-confirmation
-4b. Timeline zoom/scroll — next after 4a is verified
+3.5 Visual polish pass (icons, surface depth) — DONE (verified rendering)
+4a. Timeline thumbnails — DONE (verified rendering)
+4a.5 Black-preview fix (TextureView) + error surfacing — DONE, UNVERIFIED (current top priority)
+4b. Timeline zoom/scroll — next after 4a.5 is verified
 5+. Audio, text, stickers, effects, filters, transitions, keyframes, captions, real export (Transformer), persistence, accessibility, performance, error handling
 Biggest structural gap: no CompositionPlayer/Transformer yet.
 
@@ -94,7 +97,9 @@ Biggest structural gap: no CompositionPlayer/Transformer yet.
 - Icon-first pattern established (material-icons-extended)
 - Surface background (0xFF121212) separates chrome from the pure-black video canvas
 - Thumbnail generation via MediaMetadataRetriever, small in-memory cache, conservative (96px, 6 per clip)
-- NEW: `androidx.compose.ui.layout.ContentScale` is the correct import (not `androidx.compose.ui.graphics.ContentScale`) — easy mistake to repeat, worth remembering
+- `androidx.compose.ui.layout.ContentScale` is the correct import (not `androidx.compose.ui.graphics.ContentScale`)
+- NEW: PlayerView MUST be inflated from res/layout/player_view_texture.xml (surface_type="texture_view"), never constructed directly via `PlayerView(ctx)`, whenever ExoPlayer.setVideoEffects() is in use — otherwise the preview goes black (documented Media3 bug)
+- NEW: any future ExoPlayer error handling should go through the existing `playerErrorMessage` banner pattern in PreviewScreen.kt rather than failing silently
 
 ## Current next step
-Re-run the CI build to confirm the ContentScale fix was the only problem. If green: install and check specifically whether thumbnails actually render in the timeline, whether scrolling/recomposition feels smooth on the Tecno Spark 5, and whether the icons from the visual polish pass render correctly (that pass never got a clean build to verify against). If red again: paste the new log - there could be a second, separate issue the first error was masking.
+Get a CI build + device check covering all THREE stacked unverified changes: (1) does it compile with the new XML layout resource + LayoutInflater usage, (2) does the video preview actually show video now (not black) when rotate/flip/color effects are active, (3) does the error banner ever appear unexpectedly (would indicate a new problem) or correctly stay hidden during normal playback. This is more urgent than usual — the black-screen bug was a real, user-visible functional failure, not just a missing polish item.
