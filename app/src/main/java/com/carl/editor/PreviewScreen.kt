@@ -11,7 +11,10 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -24,8 +27,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
@@ -73,6 +78,9 @@ fun PreviewScreen(uri: Uri, onBack: () -> Unit) {
     // Which contextual tool panel is shown below the timeline (redesign Phase 3) - only one at
     // a time, replacing the previous always-visible vertical stack of all three panels.
     var selectedTool by remember { mutableStateOf<ToolTab?>(null) }
+    // Surfaced when ExoPlayer reports a playback error, so failures are visible instead of
+    // silent (a blank/frozen preview with no explanation is exactly what we want to avoid).
+    var playerErrorMessage by remember { mutableStateOf<String?>(null) }
 
     val committedClips = history.present.clips
     val displayClips = draftClips ?: committedClips
@@ -135,10 +143,18 @@ fun PreviewScreen(uri: Uri, onBack: () -> Unit) {
         val listener = object : Player.Listener {
             override fun onIsPlayingChanged(playing: Boolean) {
                 isPlaying = playing
+                // Successfully playing again clears any previous error banner.
+                if (playing) playerErrorMessage = null
             }
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 // Each clip may have its own speed - re-apply as playback crosses into the next one.
                 applySpeedForCurrentItem()
+            }
+            override fun onPlayerError(error: PlaybackException) {
+                // Never fail silently: codec issues, corrupted files, or an effects-pipeline
+                // failure should be visible to the user, not just a blank/frozen preview.
+                playerErrorMessage = error.errorCodeName.replace('_', ' ').lowercase()
+                    .replaceFirstChar { it.uppercase() }
             }
         }
         exoPlayer.addListener(listener)
@@ -241,6 +257,21 @@ fun PreviewScreen(uri: Uri, onBack: () -> Unit) {
                     },
                     modifier = playerModifier
                 )
+                // Visible error banner instead of a silent blank/frozen preview.
+                playerErrorMessage?.let { message ->
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .background(Color.Black.copy(alpha = 0.75f))
+                            .padding(horizontal = 16.dp, vertical = 12.dp)
+                    ) {
+                        Text(
+                            "Playback error: $message",
+                            color = Color.White,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
             }
             TimelineControls(
                 uri = uri,
