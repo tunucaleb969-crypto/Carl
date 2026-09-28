@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalDensity
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 import kotlin.math.max
@@ -62,6 +63,9 @@ fun TimelineControls(
     var trackWidthPx by remember { mutableStateOf(1f) }
     var zoom by remember { mutableFloatStateOf(1f) }
     val scrollState = rememberScrollState()
+    val density = LocalDensity.current
+
+    fun pxToDp(px: Float): androidx.compose.ui.unit.Dp = with(density) { px.toDp() }
 
     fun contentWidthPx(): Float = max(trackWidthPx, trackWidthPx * zoom)
 
@@ -123,7 +127,7 @@ fun TimelineControls(
         ) {
             Box(
                 modifier = Modifier
-                    .width(withDp(contentWidthPx()))
+                    .width(pxToDp(contentWidthPx()))
                     .height(56.dp)
                     .pointerInput(durationMs, zoom, trackWidthPx, scrollState.value) {
                         detectDragGestures { change, _ ->
