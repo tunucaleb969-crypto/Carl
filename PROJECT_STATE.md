@@ -148,3 +148,16 @@ Biggest structural gap: no CompositionPlayer yet (per-clip preview effects); exp
 2. Perform/record the available device verification for the timeline zoom/scroll/playhead behavior and the previously unverified TextureView/error-banner changes.
 3. Only after the above is verified, continue to Export button wiring and Transformer export verification.
 4. Keep this file updated after each meaningful milestone so a new session can resume without reconstructing project history.
+
+## Sustained build session checkpoint (2026-09-28)
+- Durable project persistence is now implemented.
+  - Versioned JSON schema stores project name, source URI, timeline clips, per-clip visual state, global visual state, and canvas settings.
+  - Latest project is autosaved with a short debounce after editor state changes.
+  - App startup restores the latest saved project when the stored source URI is available.
+  - New Project clears the previous saved draft before selecting new media.
+- Export delivery is now implemented.
+  - Export output is exposed through AndroidX FileProvider instead of a raw file URI.
+  - Successful exports now offer Open and Share actions.
+  - FileProvider paths cover Carl's app-specific Movies output and internal fallback storage.
+- CI run 200 passed for the documentation checkpoint before this batch.
+- The current persistence/export batch is awaiting its own CI verification; no device verification is claimed.
