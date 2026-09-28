@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
@@ -239,7 +240,12 @@ fun PreviewScreen(uri: Uri, onBack: () -> Unit) {
         ?.let { history.present.clips[it].speed }
         ?: 1f
 
-    Surface(modifier = Modifier.fillMaxSize(), color = Color.Black) {
+    Surface(
+        modifier = Modifier
+            .fillMaxSize()
+            .safeDrawingPadding(),
+        color = Color.Black
+    ) {
         Column(modifier = Modifier.fillMaxSize()) {
             // Project naming/persistence doesn't exist yet - placeholder name for now.
             EditorTopBar(
