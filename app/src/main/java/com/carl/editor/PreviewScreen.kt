@@ -38,6 +38,11 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import com.carl.editor.canvas.CanvasSettings
+import com.carl.editor.export.ExportEngine
+import com.carl.editor.export.ExportProgress
+import com.carl.editor.export.ExportProgressDialog
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.collect
 import com.carl.editor.effects.ColorAdjustment
 import com.carl.editor.effects.GlobalTransform
 import com.carl.editor.timeline.Clip
@@ -81,6 +86,9 @@ fun PreviewScreen(uri: Uri, onBack: () -> Unit) {
     // Surfaced when ExoPlayer reports a playback error, so failures are visible instead of
     // silent (a blank/frozen preview with no explanation is exactly what we want to avoid).
     var playerErrorMessage by remember { mutableStateOf<String?>(null) }
+    var exportProgress by remember { mutableStateOf<ExportProgress?>(null) }
+    var exportJob by remember { mutableStateOf<Job?>(null) }
+    val exportEngine = remember(context) { ExportEngine(context) }
 
     val committedClips = history.present.clips
     val displayClips = draftClips ?: committedClips
@@ -218,9 +226,19 @@ fun PreviewScreen(uri: Uri, onBack: () -> Unit) {
                 projectName = "Untitled Project",
                 canUndo = history.canUndo,
                 canRedo = history.canRedo,
+                canExport = committedClips.isNotEmpty() && exportJob?.isActive != true,
                 onBack = onBack,
                 onUndo = { history = history.undo() },
-                onRedo = { history = history.redo() }
+                onRedo = { history = history.redo() },
+                onExport = {
+                    exportJob?.cancel()
+                    exportProgress = ExportProgress.InProgress(0)
+                    exportJob = kotlinx.coroutines.CoroutineScope(Dispatchers.Main.immediate).launch {
+                        exportEngine.export(uri, committedClips).collect { progress ->
+                            exportProgress = progress
+                        }
+                    }
+                }
             )
             Box(
                 modifier = Modifier
@@ -344,5 +362,18 @@ fun PreviewScreen(uri: Uri, onBack: () -> Unit) {
                 onResetColor = { colorAdjustment = ColorAdjustment() }
             )
         }
+
+        ExportProgressDialog(
+            progress = exportProgress,
+            onDismiss = {
+                exportProgress = null
+                exportJob = null
+            },
+            onCancel = {
+                exportJob?.cancel()
+                exportJob = null
+                exportProgress = null
+            }
+        )
     }
 }
