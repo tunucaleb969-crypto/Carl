@@ -11,7 +11,10 @@ data class Clip(
     val id: String = UUID.randomUUID().toString(),
     val sourceStartMs: Long,
     val sourceEndMs: Long,
-    val speed: Float = 1f
+    val speed: Float = 1f,
+    val transform: com.carl.editor.effects.GlobalTransform = com.carl.editor.effects.GlobalTransform(),
+    val crop: com.carl.editor.effects.GlobalCrop = com.carl.editor.effects.GlobalCrop(),
+    val color: com.carl.editor.effects.ColorAdjustment = com.carl.editor.effects.ColorAdjustment()
 ) {
     init {
         require(speed.isFinite() && speed > 0f) { "Clip speed must be finite and greater than zero." }
