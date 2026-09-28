@@ -135,10 +135,10 @@ fun PreviewScreen(
                 }
             }
             sourceDurationMs = duration
-            val seededState = history.present.withSourceDuration(duration)
-            history = history.sync(seededState)
+            val reconciledState = history.present.reconcileSourceDuration(duration)
+            history = history.sync(reconciledState)
             if (selectedClipId == null) {
-                selectedClipId = seededState.clips.firstOrNull()?.id
+                selectedClipId = reconciledState.clips.firstOrNull()?.id
             }
         }
     }
