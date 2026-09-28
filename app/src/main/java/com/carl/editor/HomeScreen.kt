@@ -18,7 +18,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun HomeScreen(onNewProjectClick: () -> Unit) {
+fun HomeScreen(
+    hasSavedProject: Boolean,
+    sourceNeedsRelink: Boolean,
+    onOpenSavedProject: () -> Unit,
+    onRelinkMedia: () -> Unit,
+    onNewProjectClick: () -> Unit
+) {
     Surface(
         modifier = Modifier
             .fillMaxSize()
@@ -33,11 +39,34 @@ fun HomeScreen(onNewProjectClick: () -> Unit) {
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = "No projects yet",
+                text = when {
+                    sourceNeedsRelink -> "Project media needs to be relinked"
+                    hasSavedProject -> "Saved project ready"
+                    else -> "No projects yet"
+                },
                 color = Color.White,
                 style = MaterialTheme.typography.headlineSmall
             )
-            Spacer(modifier = Modifier.height(24.dp))
+
+            if (sourceNeedsRelink) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = "Your edits are still saved. Choose the original video again to continue.",
+                    color = Color.White.copy(alpha = 0.72f),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+                Button(onClick = onRelinkMedia) {
+                    Text("Relink Media")
+                }
+            } else if (hasSavedProject) {
+                Spacer(modifier = Modifier.height(24.dp))
+                Button(onClick = onOpenSavedProject) {
+                    Text("Continue Project")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
             Button(onClick = onNewProjectClick) {
                 Text("New Project")
             }
