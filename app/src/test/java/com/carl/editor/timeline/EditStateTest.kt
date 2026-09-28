@@ -74,6 +74,36 @@ class EditStateTest {
     }
 
     @Test
+    fun clipIndexAndTimelineStartRespectVariableSpeedDurations() {
+        val variable = EditState(
+            clips = listOf(
+                Clip(id = "a", sourceStartMs = 0L, sourceEndMs = 2_000L, speed = 2f),
+                Clip(id = "b", sourceStartMs = 2_000L, sourceEndMs = 3_000L, speed = 0.5f)
+            )
+        )
+
+        assertEquals(1_000L, variable.clipStartOnTimeline(1))
+        assertEquals(0, variable.clipIndexAt(0L))
+        assertEquals(0, variable.clipIndexAt(999L))
+        assertEquals(1, variable.clipIndexAt(1_000L))
+        assertEquals(3_000L, variable.totalDurationMs)
+        assertEquals(1, variable.clipIndexAt(2_999L))
+        assertEquals(1, variable.clipIndexAt(3_000L))
+    }
+
+    @Test
+    fun withSourceDurationSeedsOnlyAnEmptyTimeline() {
+        val empty = EditState()
+        val seeded = empty.withSourceDuration(4_000L)
+        assertEquals(listOf(0L), seeded.clips.map { it.sourceStartMs })
+        assertEquals(listOf(4_000L), seeded.clips.map { it.sourceEndMs })
+
+        val existing = state()
+        assertSame(existing, existing.withSourceDuration(9_000L))
+        assertSame(empty, empty.withSourceDuration(0L))
+    }
+
+    @Test
     fun speedChangesTimelineDurationWithoutChangingSourceRange() {
         val original = state()
         val changed = original.withSpeed("b", 2f)
