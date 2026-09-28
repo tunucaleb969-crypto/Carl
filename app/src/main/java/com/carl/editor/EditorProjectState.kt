@@ -26,6 +26,10 @@ data class EditorProjectState(
     fun withSourceDuration(sourceDurationMs: Long): EditorProjectState =
         copy(timeline = timeline.withSourceDuration(sourceDurationMs))
 
+    /** Reconciles the current timeline against the duration of the selected source. */
+    fun reconcileSourceDuration(sourceDurationMs: Long): EditorProjectState =
+        copy(timeline = timeline.reconcileSourceDuration(sourceDurationMs))
+
     fun clipStartOnTimeline(index: Int): Long = timeline.clipStartOnTimeline(index)
     fun clipIndexAt(timelineMs: Long): Int = timeline.clipIndexAt(timelineMs)
     fun indexOfClip(clipId: String): Int = timeline.indexOfClip(clipId)
