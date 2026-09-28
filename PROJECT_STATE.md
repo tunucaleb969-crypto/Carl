@@ -127,13 +127,21 @@ Biggest structural gap: no CompositionPlayer yet (per-clip preview effects); exp
 - API 36 migration is in CI verification: AGP/Gradle were upgraded together, compileSdk/targetSdk moved to 36, and edge-to-edge handling was introduced.
 - An initial CI failure was traced to incorrect Gradle wrapper URL escaping and corrected.
 - Per-clip visual mutation APIs were added to EditorProjectState for transform, crop, and color, with unit coverage.
-- CI must finish before this migration/state batch is marked VERIFIED.
+- CI run 199 passed after correcting the test imports: unit tests and debug APK build both succeeded. The API 36/toolchain and per-clip state batch is now CI-VERIFIED; device/visual verification is still required for edge-to-edge and TextureView behavior.
 
 
 - Timeline editing foundation is implemented: clip selection, delete, duplicate, move earlier/later, and selection-aware undo/redo are in the shared EditState/EditHistory layer.
 - Timeline Phase 4b work has been added: zoom from 1x to 4x, horizontal scrolling, playhead visibility auto-scroll, zoom-aware seeking, and selection following the playhead.
 - A CI failure occurred during Phase 4b. The timeline code was corrected in follow-up commits, including the missing scroll-state import and a safer density conversion path. CI verification is currently running on the latest pushed changes; do not declare Phase 4b verified until that build completes successfully.
 - Important: automated CI build verification is available; a real Android-device visual test is still required to confirm actual zoom/scroll/playhead behavior and the earlier TextureView preview fix.
+
+## Latest verification checkpoint (2026-09-28)
+- CI run 199 passed on commit f51d8a72e6285fb0ec6e168589ebc03d6409769c.
+- Unit tests passed.
+- Debug APK build passed and artifact upload passed.
+- The test-import regression introduced during the per-clip visual-state test was fixed and reverified.
+- CI still reports non-blocking deprecation warnings in older Material3/icon APIs and the GitHub Actions setup-java action; these are cleanup items, not build failures.
+- No physical Android device/emulator verification has been claimed for the API 36 edge-to-edge or TextureView preview changes.
 
 ## Next step after CI is green
 1. Confirm the latest GitHub Actions build succeeds. If it fails, stop feature work and fix the exact compiler/build issue first.
