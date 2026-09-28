@@ -45,6 +45,15 @@ data class EditorProjectState(
     fun withSpeed(clipId: String, speed: Float): EditorProjectState =
         copy(timeline = timeline.withSpeed(clipId, speed))
 
+    fun withClipTransform(clipId: String, transform: GlobalTransform): EditorProjectState =
+        updateClip(clipId) { it.copy(transform = transform) }
+
+    fun withClipCrop(clipId: String, crop: GlobalCrop): EditorProjectState =
+        updateClip(clipId) { it.copy(crop = crop) }
+
+    fun withClipColor(clipId: String, color: ColorAdjustment): EditorProjectState =
+        updateClip(clipId) { it.copy(color = color) }
+
     /**
      * Applies a single-clip mutation through the timeline model so the project's mutation
      * semantics stay identical to EditState.updateClip().
