@@ -168,7 +168,7 @@ fun PreviewScreen(
         if (clips.isEmpty()) return
         var remaining = target.coerceIn(0L, clips.sumOf { it.durationMs })
         for ((index, clip) in clips.withIndex()) {
-            if (remaining <= clip.durationMs) {
+            if (remaining < clip.durationMs || (index == clips.lastIndex && remaining == clip.durationMs)) {
                 val sourcePositionMs = (remaining * clip.speed).toLong()
                 exoPlayer.seekTo(index, sourcePositionMs)
                 applySpeedForCurrentItem()
