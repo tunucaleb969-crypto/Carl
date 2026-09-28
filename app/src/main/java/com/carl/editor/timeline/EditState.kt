@@ -100,6 +100,14 @@ data class EditState(
         return copy(clips = clips.map { if (it.id == clipId) it.copy(speed = clamped) else it })
     }
 
+    /** Updates one clip atomically while preserving every other timeline clip. */
+    fun updateClip(clipId: String, update: (Clip) -> Clip): EditState {
+        if (indexOfClip(clipId) == -1) return this
+        return copy(clips = clips.map { clip ->
+            if (clip.id == clipId) update(clip) else clip
+        })
+    }
+
     companion object {
         /** No clip's *source* range may ever be shorter than this — prevents zero/negative-length clips. */
         const val MIN_CLIP_MS = 200L
