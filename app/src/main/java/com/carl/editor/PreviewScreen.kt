@@ -63,7 +63,13 @@ import kotlinx.coroutines.withContext
 // effect-building side.
 @OptIn(UnstableApi::class)
 @Composable
-fun PreviewScreen(uri: Uri, onBack: () -> Unit) {
+fun PreviewScreen(
+    uri: Uri,
+    initialProjectState: EditorProjectState = EditorProjectState(),
+    initialProjectName: String = "Untitled Project",
+    onProjectChanged: (EditorProjectState) -> Unit = {},
+    onBack: () -> Unit
+) {
     val context = LocalContext.current
     val exoPlayer = remember {
         ExoPlayer.Builder(context).build().apply { playWhenReady = true }
@@ -71,7 +77,7 @@ fun PreviewScreen(uri: Uri, onBack: () -> Unit) {
 
     var isPlaying by remember { mutableStateOf(true) }
     var positionMs by remember { mutableLongStateOf(0L) }
-    var history by remember { mutableStateOf(EditorProjectHistory()) }
+    var history by remember { mutableStateOf(EditorProjectHistory(initialProjectState)) }
     var selectedClipId by remember { mutableStateOf<String?>(null) }
     var sourceDurationMs by remember { mutableLongStateOf(0L) }
     // Non-null only while a trim handle is actively being dragged; holds the live preview
@@ -92,6 +98,13 @@ fun PreviewScreen(uri: Uri, onBack: () -> Unit) {
     var exportJob by remember { mutableStateOf<Job?>(null) }
     val exportEngine = remember(context) { ExportEngine(context) }
     val exportScope = rememberCoroutineScope()
+
+    // Debounced autosave: editor gestures can update state many times per second, so persistence
+    // waits briefly for the current burst to settle instead of writing on every slider frame.
+    LaunchedEffect(history.present) {
+        delay(350)
+        onProjectChanged(history.present)
+    }
 
     val committedClips = history.present.clips
     val displayClips = draftClips ?: committedClips
@@ -247,9 +260,9 @@ fun PreviewScreen(uri: Uri, onBack: () -> Unit) {
         color = Color.Black
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // Project naming/persistence doesn't exist yet - placeholder name for now.
+            // Project identity and autosave are provided by the persistence layer.
             EditorTopBar(
-                projectName = "Untitled Project",
+                projectName = initialProjectName,
                 canUndo = history.canUndo,
                 canRedo = history.canRedo,
                 canExport = committedClips.isNotEmpty() && exportJob?.isActive != true,

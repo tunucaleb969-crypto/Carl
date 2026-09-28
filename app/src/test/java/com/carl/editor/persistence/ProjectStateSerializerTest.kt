@@ -1,0 +1,63 @@
+package com.carl.editor.persistence
+
+import androidx.compose.ui.graphics.Color
+import com.carl.editor.EditorProjectState
+import com.carl.editor.canvas.AspectRatioPreset
+import com.carl.editor.canvas.CanvasSettings
+import com.carl.editor.effects.ColorAdjustment
+import com.carl.editor.effects.GlobalCrop
+import com.carl.editor.effects.GlobalTransform
+import com.carl.editor.timeline.Clip
+import com.carl.editor.timeline.EditState
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Test
+
+class ProjectStateSerializerTest {
+    @Test
+    fun roundTrip_preserves_project_graph_and_visual_state() {
+        val first = Clip(
+            id = "clip-a",
+            sourceStartMs = 250L,
+            sourceEndMs = 5_250L,
+            speed = 1.5f,
+            transform = GlobalTransform(
+                rotationDegrees = 90f,
+                flipHorizontal = true,
+                zoom = 1.75f,
+                panX = -0.25f,
+                panY = 0.4f
+            ),
+            crop = GlobalCrop(0.1f, 0.2f, 0.05f, 0.15f),
+            color = ColorAdjustment(
+                brightness = 0.2f,
+                contrast = -0.15f,
+                saturation = 22f
+            )
+        )
+        val original = EditorProjectState(
+            timeline = EditState(listOf(first)),
+            globalTransform = GlobalTransform(rotationDegrees = 180f, zoom = 2f, panY = -0.3f),
+            globalCrop = GlobalCrop(0.08f),
+            colorAdjustment = ColorAdjustment(brightness = -0.1f, contrast = 0.25f, saturation = -30f),
+            canvasSettings = CanvasSettings(AspectRatioPreset.RATIO_9_16, Color(0xFF11223344))
+        )
+
+        val restored = ProjectStateSerializer.fromJson(
+            ProjectStateSerializer.toJson("Demo", "content://video/1", original)
+        )
+
+        assertNotNull(restored)
+        assertEquals("Demo", restored!!.projectName)
+        assertEquals("content://video/1", restored.sourceUri)
+        assertEquals(original, restored.state)
+    }
+
+    @Test
+    fun invalid_schema_is_rejected() {
+        val result = ProjectStateSerializer.fromJson(
+            """{"schemaVersion":999,"projectName":"Bad","sourceUri":"content://bad","state":{}}"""
+        )
+        assertEquals(null, result)
+    }
+}

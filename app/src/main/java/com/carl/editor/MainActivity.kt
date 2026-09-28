@@ -13,6 +13,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.carl.editor.persistence.CarlProjectRepository
+import com.carl.editor.persistence.ProjectStateSerializer
 import com.carl.editor.ui.theme.CarlTheme
 
 class MainActivity : ComponentActivity() {
@@ -32,8 +34,12 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        val projectRepository = CarlProjectRepository(this)
+        val savedProject = projectRepository.load()
+
         setContent {
-            var videoUri by remember { mutableStateOf<Uri?>(null) }
+            var savedDraft by remember { mutableStateOf(savedProject) }
+            var videoUri by remember { mutableStateOf<Uri?>(savedProject?.sourceUri?.let(Uri::parse)) }
 
             val pickVideoLauncher = rememberLauncherForActivityResult(
                 contract = ActivityResultContracts.PickVisualMedia()
@@ -46,6 +52,8 @@ class MainActivity : ComponentActivity() {
                 if (videoUri == null) {
                     HomeScreen(
                         onNewProjectClick = {
+                            savedDraft = null
+                            projectRepository.clear()
                             pickVideoLauncher.launch(
                                 PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly)
                             )
@@ -54,7 +62,19 @@ class MainActivity : ComponentActivity() {
                 } else {
                     PreviewScreen(
                         uri = videoUri!!,
-                        onBack = { videoUri = null }
+                        initialProjectState = savedDraft?.state ?: EditorProjectState(),
+                        initialProjectName = savedDraft?.projectName ?: "Untitled Project",
+                        onProjectChanged = { state ->
+                            projectRepository.save(
+                                savedDraft?.projectName ?: "Untitled Project",
+                                videoUri!!.toString(),
+                                state
+                            )
+                        },
+                        onBack = {
+                            videoUri = null
+                            savedDraft = null
+                        }
                     )
                 }
             }
