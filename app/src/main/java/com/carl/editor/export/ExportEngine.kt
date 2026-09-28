@@ -162,6 +162,35 @@ class ExportEngine(private val context: Context) {
         }
     }
 
+    private fun buildEditedItems(
+        sourceUri: Uri,
+        clips: List<Clip>,
+        videoEffects: List<Effect>
+    ): List<EditedMediaItem> = clips.map { clip ->
+        val mediaItem = MediaItem.Builder()
+            .setUri(sourceUri)
+            .setClippingConfiguration(
+                MediaItem.ClippingConfiguration.Builder()
+                    .setStartPositionMs(clip.sourceStartMs)
+                    .setEndPositionMs(clip.sourceEndMs)
+                    .build()
+            )
+            .build()
+        val speedProvider = ConstantSpeedProvider(clip.speed)
+        val effects = clip.crop.toEffects() +
+            clip.transform.toEffects() +
+            clip.color.toEffects() +
+            videoEffects
+        EditedMediaItem.Builder(mediaItem)
+            .setEffects(
+                Effects(
+                    listOf(androidx.media3.common.audio.SpeedChangingAudioProcessor(speedProvider)),
+                    effects + SpeedChangeEffect(speedProvider)
+                )
+            )
+            .build()
+    }
+
     private class ConstantSpeedProvider(private val speed: Float) : SpeedProvider {
         override fun getNextSpeedChangeTimeUs(timeUs: Long): Long = C.TIME_UNSET
 
