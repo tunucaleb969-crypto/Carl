@@ -4,16 +4,16 @@ Last updated: 2026-09-28
 
 ## Current milestone
 
-Phase A — Timeline foundation.
+Phase A — Timeline foundation, with the speed/export checkpoint verified; Phase B implementation is now starting.
 
-The timeline clip-management milestone is implemented and the latest code checkpoint has a successful GitHub Actions debug build.
+The timeline clip-management milestone is implemented. Variable-speed timeline coverage and the Media3 1.4.1 speed-export implementation both have successful GitHub Actions checkpoints.
 
 ## Last verified code checkpoint
 
-- Commit: 46192b10777f15bf916c1f87aaa1b93f1e9f2dc8
+- Commit: b75e0275d8be05675603d05285d6e0876944cee7
 - Branch: main
-- GitHub Actions run: 120
-- Run ID: 36441329534
+- GitHub Actions run: 131
+- Run ID: 36443943638
 - Unit tests: success
 - Debug APK build: success
 - Verification: GitHub Actions `testDebugUnitTest` and `assembleDebug` both completed successfully.
@@ -52,12 +52,14 @@ Keep the existing architecture and extend it rather than rebuilding working syst
 
 The current export pipeline primarily concatenates trimmed clips.
 
-Preview-only behavior that is not yet guaranteed to be baked into exported output:
-- playback speed
+Preview/export behavior now implemented in code:
+- playback speed per clip
 - global rotate/flip
 - brightness
 - contrast
 - saturation
+
+Still preview/layout-only:
 - canvas/background presentation
 
 Do not describe those preview effects as fully rendered export features until export parity is implemented.
@@ -72,12 +74,13 @@ The export success UI currently reports app-storage output; open/share output ac
 
 ## Next logical milestone
 
-Continue Phase A, then move into Phase B.
+Move into Phase B while preserving the existing timeline architecture.
 
-Immediate recommended work:
-1. Strengthen timeline unit-test coverage, especially undo/redo, ordering, split, and speed edge cases.
-2. Verify the zoom/scroll implementation against empty, single-clip, and multi-clip timelines.
-3. Then begin Phase B core clip editing, starting with crop/pan/zoom while preserving preview/export parity.
+Immediate Phase B work:
+1. Add crop/pan/zoom data and controls with a clear scope boundary between global and per-clip effects.
+2. Preserve preview/export parity for every new effect before calling it complete.
+3. Add unit tests for new edit-state transformations and keep CI green.
+4. Device verification remains outstanding.
 
 ## Future roadmap
 
