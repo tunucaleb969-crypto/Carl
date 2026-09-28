@@ -2,6 +2,9 @@ package com.carl.editor.export
 
 import android.content.Context
 import android.net.Uri
+import android.os.Environment
+import android.os.Handler
+import android.os.Looper
 import androidx.annotation.OptIn
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
@@ -13,11 +16,16 @@ import androidx.media3.transformer.ExportResult
 import androidx.media3.transformer.ProgressHolder
 import androidx.media3.transformer.Transformer
 import com.carl.editor.timeline.Clip
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
+import java.util.concurrent.atomic.AtomicBoolean
 
 sealed class ExportProgress {
     data class InProgress(val percent: Int) : ExportProgress()
@@ -54,10 +62,24 @@ class ExportEngine(private val context: Context) {
             return@callbackFlow
         }
 
-        val outputFile = File(
-            context.getExternalFilesDir(null),
-            "carl_export_${System.currentTimeMillis()}.mp4"
-        )
+        validateSource(sourceUri)?.let { message ->
+            trySend(ExportProgress.Failure(message))
+            close()
+            return@callbackFlow
+        }
+
+        clips.firstOrNull { it.sourceStartMs < 0 || it.sourceEndMs <= it.sourceStartMs }?.let {
+            trySend(ExportProgress.Failure("Timeline contains a clip with an invalid trim range."))
+            close()
+            return@callbackFlow
+        }
+
+        val outputFile = createOutputFile()
+        if (outputFile == null) {
+            trySend(ExportProgress.Failure("Unable to create an export output directory."))
+            close()
+            return@callbackFlow
+        }
 
         val editedItems = clips.map { clip ->
             val mediaItem = MediaItem.Builder()
@@ -73,38 +95,115 @@ class ExportEngine(private val context: Context) {
         }
 
         val composition = Composition.Builder(EditedMediaItemSequence(editedItems)).build()
+        val isTerminal = AtomicBoolean(false)
+        val completedSuccessfully = AtomicBoolean(false)
+        val mainHandler = Handler(Looper.getMainLooper())
 
-        val transformer = Transformer.Builder(context)
-            .addListener(object : Transformer.Listener {
-                override fun onCompleted(finishedComposition: Composition, exportResult: ExportResult) {
-                    trySend(ExportProgress.Success(Uri.fromFile(outputFile)))
-                    close()
+        // Media3 Transformer confines its methods and listeners to one application thread.
+        // Build and start it on the main thread, then use that same dispatcher for polling.
+        val transformer = withContext(NonCancellable + Dispatchers.Main.immediate) {
+            Transformer.Builder(context)
+                .addListener(object : Transformer.Listener {
+                    override fun onCompleted(finishedComposition: Composition, exportResult: ExportResult) {
+                        if (isTerminal.compareAndSet(false, true)) {
+                            val result = trySend(ExportProgress.Success(Uri.fromFile(outputFile)))
+                            completedSuccessfully.set(result.isSuccess)
+                            close()
+                        }
+                    }
+
+                    override fun onError(
+                        finishedComposition: Composition,
+                        exportResult: ExportResult,
+                        exportException: ExportException
+                    ) {
+                        if (isTerminal.compareAndSet(false, true)) {
+                            // Never fail silently - surface the real error message to the caller.
+                            trySend(ExportProgress.Failure(exportException.message ?: "Export failed"))
+                            close()
+                        }
+                    }
+                })
+                .build()
+                .also { transformer ->
+                    try {
+                        transformer.start(composition, outputFile.absolutePath)
+                    } catch (exception: RuntimeException) {
+                        isTerminal.set(true)
+                        trySend(ExportProgress.Failure(exception.message ?: "Unable to start export"))
+                        close()
+                    }
                 }
-
-                override fun onError(
-                    finishedComposition: Composition,
-                    exportResult: ExportResult,
-                    exportException: ExportException
-                ) {
-                    // Never fail silently - surface the real error message to the caller.
-                    trySend(ExportProgress.Failure(exportException.message ?: "Export failed"))
-                    close()
-                }
-            })
-            .build()
-
-        transformer.start(composition, outputFile.absolutePath)
-
-        // Transformer has no push-based progress callback - it must be polled.
-        val progressHolder = ProgressHolder()
-        while (isActive) {
-            val state = transformer.getProgress(progressHolder)
-            if (state == Transformer.PROGRESS_STATE_AVAILABLE) {
-                trySend(ExportProgress.InProgress(progressHolder.progress))
-            }
-            delay(250)
         }
 
-        awaitClose { transformer.cancel() }
+        // Transformer has no push-based progress callback - it must be polled.
+        val progressJob = launch(Dispatchers.Main.immediate) {
+            val progressHolder = ProgressHolder()
+            try {
+                while (!isTerminal.get()) {
+                    val state = transformer.getProgress(progressHolder)
+                    if (state == Transformer.PROGRESS_STATE_AVAILABLE) {
+                        trySend(ExportProgress.InProgress(progressHolder.progress))
+                    }
+                    delay(250)
+                }
+            } catch (exception: RuntimeException) {
+                if (isTerminal.compareAndSet(false, true)) {
+                    trySend(ExportProgress.Failure(exception.message ?: "Unable to read export progress"))
+                    close()
+                }
+            }
+        }
+
+        awaitClose {
+            progressJob.cancel()
+            mainHandler.post {
+                if (!isTerminal.getAndSet(true)) {
+                    transformer.cancel()
+                }
+                if (!completedSuccessfully.get()) {
+                    outputFile.delete()
+                }
+            }
+        }
+    }
+
+    private fun validateSource(sourceUri: Uri): String? = when (sourceUri.scheme) {
+        "file" -> {
+            val sourceFile = sourceUri.path?.let(::File)
+            if (sourceFile == null || !sourceFile.isFile || !sourceFile.canRead()) {
+                "The selected source file is missing or cannot be read."
+            } else {
+                null
+            }
+        }
+
+        "content" -> try {
+            val inputStream = context.contentResolver.openInputStream(sourceUri)
+            if (inputStream == null) {
+                "The selected source cannot be read."
+            } else {
+                inputStream.use { }
+                null
+            }
+        } catch (exception: SecurityException) {
+            "Permission to read the selected source was denied."
+        } catch (exception: Exception) {
+            "The selected source cannot be read."
+        }
+
+        null -> "The selected source has no URI scheme."
+        else -> null
+    }
+
+    private fun createOutputFile(): File? {
+        val outputDirectory = context.getExternalFilesDir(Environment.DIRECTORY_MOVIES) ?: context.filesDir
+        if (!outputDirectory.exists() && !outputDirectory.mkdirs()) {
+            return null
+        }
+        if (!outputDirectory.isDirectory || !outputDirectory.canWrite()) {
+            return null
+        }
+        return File(outputDirectory, "carl_export_${System.currentTimeMillis()}.mp4")
     }
 }
