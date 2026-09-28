@@ -163,6 +163,24 @@ fun PreviewScreen(
         }
     }
 
+    fun seekTimelineMs(target: Long) {
+        val clips = history.present.clips
+        if (clips.isEmpty()) return
+        var remaining = target.coerceIn(0L, clips.sumOf { it.durationMs })
+        for ((index, clip) in clips.withIndex()) {
+            if (remaining <= clip.durationMs) {
+                val sourcePositionMs = (remaining * clip.speed).toLong()
+                exoPlayer.seekTo(index, sourcePositionMs)
+                applySpeedForCurrentItem()
+                return
+            }
+            remaining -= clip.durationMs
+        }
+        val lastIndex = clips.size - 1
+        exoPlayer.seekTo(lastIndex, clips.last().sourceDurationMs)
+        applySpeedForCurrentItem()
+    }
+
     // Rebuild the ExoPlayer playlist whenever the committed clip list OR either whole-video effect
     // set changes (split, trim commit, undo, redo, speed change, rotate, flip, color adjustment) -
     // never during a live drag, which only touches draftClips. setVideoEffects() must be called
@@ -233,24 +251,6 @@ fun PreviewScreen(
             }
             delay(200)
         }
-    }
-
-    fun seekTimelineMs(target: Long) {
-        val clips = history.present.clips
-        if (clips.isEmpty()) return
-        var remaining = target.coerceIn(0L, clips.sumOf { it.durationMs })
-        for ((index, clip) in clips.withIndex()) {
-            if (remaining <= clip.durationMs) {
-                val sourcePositionMs = (remaining * clip.speed).toLong()
-                exoPlayer.seekTo(index, sourcePositionMs)
-                applySpeedForCurrentItem()
-                return
-            }
-            remaining -= clip.durationMs
-        }
-        val lastIndex = clips.size - 1
-        exoPlayer.seekTo(lastIndex, clips.last().sourceDurationMs)
-        applySpeedForCurrentItem()
     }
 
     fun commitDraft() {
