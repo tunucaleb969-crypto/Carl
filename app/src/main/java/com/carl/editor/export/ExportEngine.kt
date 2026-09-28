@@ -52,15 +52,15 @@ sealed class ExportProgress {
  *   MediaItem.ClippingConfiguration approach already used for preview.
  * - Honors each clip's playback speed using Media3 1.4.1 audio/video speed effects, so the
  *   exported media duration and audio/video timing follow the same speed value as preview.
- * - Does NOT bake in rotate/flip or color adjustments yet. Those remain preview-only until export
- *   receives the same effect state from the editor.
+ * - Accepts the same whole-video Media3 effects used by preview (rotate/flip/color) so those
+ *   adjustments can be rendered into the exported clips as well.
  * - Output format: Transformer's own defaults (no explicit resolution/bitrate/codec override
  *   yet) - a later step should add configurable export settings.
  */
 @OptIn(UnstableApi::class)
 class ExportEngine(private val context: Context) {
 
-    fun export(sourceUri: Uri, clips: List<Clip>): Flow<ExportProgress> = callbackFlow {
+    fun export(sourceUri: Uri, clips: List<Clip>, videoEffects: List<Effect> = emptyList()): Flow<ExportProgress> = callbackFlow {
         if (clips.isEmpty()) {
             trySend(ExportProgress.Failure("Nothing to export - the timeline is empty."))
             close()
@@ -103,7 +103,7 @@ class ExportEngine(private val context: Context) {
                 .setEffects(
                     Effects(
                         listOf<AudioProcessor>(speedAudioProcessor),
-                        listOf<Effect>(speedEffect)
+                        videoEffects + speedEffect
                     )
                 )
                 .build()
