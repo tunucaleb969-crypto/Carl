@@ -4,9 +4,23 @@ Last updated: 2026-09-28
 
 ## Current milestone
 
-Phase A — Timeline foundation, with the speed/export checkpoint verified; Phase B implementation is now starting.
+Phase A — Timeline foundation, with speed/export verified; Phase B transform/crop implementation is in progress.
 
 The timeline clip-management milestone is implemented. Variable-speed timeline coverage and the Media3 1.4.1 speed-export implementation both have successful GitHub Actions checkpoints.
+
+## Last verified code checkpoint
+
+- Commit: 9fb30a89c866a1478e9fff7356172f9d739eff81
+- Crop unit coverage checkpoint: GitHub Actions run 142 succeeded.
+- Current transform batch is under verification; the first test run exposed effect-construction failures and those failures are being fixed before the batch is marked complete.
+
+## Current Phase B progress
+
+- Global crop model and controls are wired into the contextual tool dock, preview, and export effect pipeline.
+- Global crop bounds have unit coverage.
+- Global transform now includes zoom and pan state with clamped ranges and contextual controls.
+- Transform zoom/pan wiring is present in preview and export effect construction.
+- The first transform verification exposed runtime effect-construction failures in unit tests; the implementation was adjusted to stay within the pinned Media3 1.4.1 transform API and is awaiting the replacement CI checkpoint.
 
 ## Last verified code checkpoint
 
