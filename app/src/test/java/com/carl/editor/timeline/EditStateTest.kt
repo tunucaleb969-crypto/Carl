@@ -114,6 +114,26 @@ class EditStateTest {
         assertEquals(2f, clip.speed)
     }
 
+
+    @Test
+    fun updateClipChangesOnlyTargetClip() {
+        val original = state()
+        val updated = original.updateClip("b") { it.copy(speed = 2f) }
+
+        assertEquals(listOf("a", "b", "c"), updated.clips.map { it.id })
+        assertEquals(1f, updated.clips[0].speed)
+        assertEquals(2f, updated.clips[1].speed)
+        assertEquals(1f, updated.clips[2].speed)
+        assertEquals(original.clips[1].sourceStartMs, updated.clips[1].sourceStartMs)
+        assertEquals(original.clips[1].sourceEndMs, updated.clips[1].sourceEndMs)
+    }
+
+    @Test
+    fun updateMissingClipIsNoOp() {
+        val original = state()
+        assertSame(original, original.updateClip("missing") { it.copy(speed = 2f) })
+    }
+
     @Test(expected = IllegalArgumentException::class)
     fun nonPositiveSpeedIsRejected() {
         Clip(sourceStartMs = 0L, sourceEndMs = 1_000L, speed = 0f)
