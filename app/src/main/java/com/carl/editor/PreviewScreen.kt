@@ -365,22 +365,36 @@ fun PreviewScreen(
                 onDeleteClip = {
                     val id = selectedClipId
                     if (id != null) {
-                        val currentIndex = history.present.indexOfClip(id)
-                        val newState = history.present.deleteClip(id)
-                        history = history.push(newState)
-                        selectedClipId = newState.clips
-                            .getOrNull(currentIndex.coerceAtMost(newState.clips.lastIndex))
-                            ?.id
-                            ?: newState.clips.lastOrNull()?.id
+                        val before = history.present
+                        val currentIndex = before.indexOfClip(id)
+                        if (currentIndex >= 0) {
+                            val newState = before.deleteClip(id)
+                            history = history.push(newState)
+                            val replacementIndex = currentIndex.coerceAtMost(newState.clips.lastIndex)
+                            selectedClipId = newState.clips.getOrNull(replacementIndex)?.id
+                                ?: newState.clips.lastOrNull()?.id
+                            if (replacementIndex >= 0) {
+                                seekTimelineMs(newState.clipStartOnTimeline(replacementIndex))
+                            } else {
+                                seekTimelineMs(0L)
+                            }
+                        }
                     }
                 },
                 onDuplicateClip = {
                     val id = selectedClipId
                     if (id != null) {
-                        val originalIndex = history.present.indexOfClip(id)
-                        val newState = history.present.duplicateClip(id)
-                        history = history.push(newState)
-                        selectedClipId = newState.clips.getOrNull(originalIndex + 1)?.id ?: id
+                        val before = history.present
+                        val originalIndex = before.indexOfClip(id)
+                        if (originalIndex >= 0) {
+                            val newState = before.duplicateClip(id)
+                            history = history.push(newState)
+                            val duplicateIndex = (originalIndex + 1).coerceAtMost(newState.clips.lastIndex)
+                            selectedClipId = newState.clips.getOrNull(duplicateIndex)?.id ?: id
+                            if (duplicateIndex >= 0) {
+                                seekTimelineMs(newState.clipStartOnTimeline(duplicateIndex))
+                            }
+                        }
                     }
                 },
                 onMoveClipUp = {
