@@ -386,15 +386,39 @@ fun PreviewScreen(
                 onMoveClipUp = {
                     val id = selectedClipId
                     if (id != null) {
-                        history = history.push(history.present.moveClip(id, -1))
-                        selectedClipId = id
+                        val before = history.present
+                        val oldIndex = before.indexOfClip(id)
+                        if (oldIndex >= 0) {
+                            val oldStart = before.clipStartOnTimeline(oldIndex)
+                            val oldOffset = (positionMs - oldStart)
+                                .coerceIn(0L, before.clips[oldIndex].durationMs)
+                            val updated = before.moveClip(id, -1)
+                            if (updated !== before) {
+                                history = history.push(updated)
+                                selectedClipId = id
+                                val newIndex = updated.indexOfClip(id)
+                                seekTimelineMs(updated.clipStartOnTimeline(newIndex) + oldOffset)
+                            }
+                        }
                     }
                 },
                 onMoveClipDown = {
                     val id = selectedClipId
                     if (id != null) {
-                        history = history.push(history.present.moveClip(id, 1))
-                        selectedClipId = id
+                        val before = history.present
+                        val oldIndex = before.indexOfClip(id)
+                        if (oldIndex >= 0) {
+                            val oldStart = before.clipStartOnTimeline(oldIndex)
+                            val oldOffset = (positionMs - oldStart)
+                                .coerceIn(0L, before.clips[oldIndex].durationMs)
+                            val updated = before.moveClip(id, 1)
+                            if (updated !== before) {
+                                history = history.push(updated)
+                                selectedClipId = id
+                                val newIndex = updated.indexOfClip(id)
+                                seekTimelineMs(updated.clipStartOnTimeline(newIndex) + oldOffset)
+                            }
+                        }
                     }
                 },
                 onPlayPause = {
