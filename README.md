@@ -8,7 +8,7 @@ A professional Android video editor focused on a strong mobile editing workflow,
 ## Engineering direction
 Carl is being developed feature-batch by feature-batch. The architecture is being hardened for per-clip effects, multi-track editing, audio, captions, transitions, keyframes, adaptive phone/tablet/foldable layouts, device capability-aware rendering, reliable export, project persistence, and recovery.
 
-The implementation is capability-based rather than tied to specific phone models. Android's current adaptive guidance recommends responsive layouts based on available window size and runtime capabilities rather than device allowlists. citeturn0search1turn0search4
+The implementation is capability-based rather than tied to specific phone models. Android's current adaptive guidance recommends responsive layouts based on available window size and runtime capabilities rather than device allowlists.
 
 ## Tech stack
 - Kotlin + Jetpack Compose
