@@ -122,6 +122,14 @@ Biggest structural gap: no CompositionPlayer yet (per-clip preview effects); exp
 - Research/continuity documentation commits followed; CI for the newest documentation commits must be checked before calling the repository fully green.
 
 ## Current continuation status (2026-09-28)
+
+### Latest work batch
+- API 36 migration is in CI verification: AGP/Gradle were upgraded together, compileSdk/targetSdk moved to 36, and edge-to-edge handling was introduced.
+- An initial CI failure was traced to incorrect Gradle wrapper URL escaping and corrected.
+- Per-clip visual mutation APIs were added to EditorProjectState for transform, crop, and color, with unit coverage.
+- CI must finish before this migration/state batch is marked VERIFIED.
+
+
 - Timeline editing foundation is implemented: clip selection, delete, duplicate, move earlier/later, and selection-aware undo/redo are in the shared EditState/EditHistory layer.
 - Timeline Phase 4b work has been added: zoom from 1x to 4x, horizontal scrolling, playhead visibility auto-scroll, zoom-aware seeking, and selection following the playhead.
 - A CI failure occurred during Phase 4b. The timeline code was corrected in follow-up commits, including the missing scroll-state import and a safer density conversion path. CI verification is currently running on the latest pushed changes; do not declare Phase 4b verified until that build completes successfully.
