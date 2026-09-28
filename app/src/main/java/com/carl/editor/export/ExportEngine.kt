@@ -6,15 +6,20 @@ import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import androidx.annotation.OptIn
+import androidx.media3.common.Effect
 import androidx.media3.common.MediaItem
+import androidx.media3.common.audio.AudioProcessor
+import androidx.media3.common.audio.SpeedProvider
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.transformer.Composition
+import androidx.media3.transformer.Effects
 import androidx.media3.transformer.EditedMediaItem
 import androidx.media3.transformer.EditedMediaItemSequence
 import androidx.media3.transformer.ExportException
 import androidx.media3.transformer.ExportResult
 import androidx.media3.transformer.ProgressHolder
 import androidx.media3.transformer.Transformer
+import androidx.media3.effect.SpeedChangeEffect
 import com.carl.editor.timeline.Clip
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
@@ -90,8 +95,16 @@ class ExportEngine(private val context: Context) {
                         .build()
                 )
                 .build()
+            val speedProvider = ConstantSpeedProvider(clip.speed)
+            val speedEffect = SpeedChangeEffect(speedProvider)
+            val speedAudioProcessor = androidx.media3.common.audio.SpeedChangingAudioProcessor(speedProvider)
             EditedMediaItem.Builder(mediaItem)
-                .setSpeed(ConstantSpeedProvider(clip.speed))
+                .setEffects(
+                    Effects(
+                        listOf<AudioProcessor>(speedAudioProcessor),
+                        listOf<Effect>(speedEffect)
+                    )
+                )
                 .build()
         }
 
