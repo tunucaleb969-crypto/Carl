@@ -47,6 +47,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import com.carl.editor.effects.ColorAdjustment
 import com.carl.editor.effects.GlobalTransform
+import com.carl.editor.effects.GlobalCrop
 import com.carl.editor.timeline.Clip
 import com.carl.editor.timeline.EditHistory
 import com.carl.editor.timeline.EditState
@@ -78,6 +79,7 @@ fun PreviewScreen(uri: Uri, onBack: () -> Unit) {
     var draftClips by remember { mutableStateOf<List<Clip>?>(null) }
     // Whole-video rotate/flip - NOT per-clip (see GlobalTransform kdoc for why).
     var globalTransform by remember { mutableStateOf(GlobalTransform()) }
+    var globalCrop by remember { mutableStateOf(GlobalCrop()) }
     // Whole-video brightness/contrast/saturation - same scope limitation as globalTransform.
     var colorAdjustment by remember { mutableStateOf(ColorAdjustment()) }
     // Output frame: aspect ratio + background fill. Pure Compose layout, independent of
@@ -149,7 +151,7 @@ fun PreviewScreen(uri: Uri, onBack: () -> Unit) {
     // before prepare(), and dynamically swapping effects on an already-prepared player has known
     // stability issues, so we always go through this same rebuild path rather than hot-swapping
     // effects in place.
-    LaunchedEffect(committedClips, globalTransform, colorAdjustment) {
+    LaunchedEffect(committedClips, globalTransform, globalCrop, colorAdjustment) {
         if (committedClips.isEmpty()) return@LaunchedEffect
         val mediaItems = committedClips.map { clip ->
             MediaItem.Builder()
@@ -162,7 +164,7 @@ fun PreviewScreen(uri: Uri, onBack: () -> Unit) {
                 )
                 .build()
         }
-        exoPlayer.setVideoEffects(globalTransform.toEffects() + colorAdjustment.toEffects())
+        exoPlayer.setVideoEffects(globalCrop.toEffects() + globalCrop.toEffects() + globalTransform.toEffects() + colorAdjustment.toEffects())
         exoPlayer.setMediaItems(mediaItems)
         exoPlayer.prepare()
         exoPlayer.playWhenReady = isPlaying
@@ -414,6 +416,8 @@ fun PreviewScreen(uri: Uri, onBack: () -> Unit) {
                 selectedTool = selectedTool,
                 onSelectTool = { selectedTool = it },
                 globalTransform = globalTransform,
+                globalCrop = globalCrop,
+                onSelectCropInset = { globalCrop = GlobalCrop(it) },
                 onRotate = { globalTransform = globalTransform.rotatedClockwise() },
                 onToggleFlipHorizontal = {
                     globalTransform = globalTransform.copy(flipHorizontal = !globalTransform.flipHorizontal)
