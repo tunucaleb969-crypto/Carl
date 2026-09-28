@@ -164,7 +164,7 @@ fun PreviewScreen(uri: Uri, onBack: () -> Unit) {
                 )
                 .build()
         }
-        exoPlayer.setVideoEffects(globalCrop.toEffects() + globalCrop.toEffects() + globalTransform.toEffects() + colorAdjustment.toEffects())
+        exoPlayer.setVideoEffects(globalCrop.toEffects() + globalTransform.toEffects() + colorAdjustment.toEffects())
         exoPlayer.setMediaItems(mediaItems)
         exoPlayer.prepare()
         exoPlayer.playWhenReady = isPlaying
@@ -261,7 +261,7 @@ fun PreviewScreen(uri: Uri, onBack: () -> Unit) {
                         exportEngine.export(
                             uri,
                             committedClips,
-                            globalTransform.toEffects() + colorAdjustment.toEffects()
+                            globalCrop.toEffects() + globalTransform.toEffects() + colorAdjustment.toEffects()
                         ).collect { progress ->
                             exportProgress = progress
                         }
