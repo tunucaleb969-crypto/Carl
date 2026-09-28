@@ -1,5 +1,6 @@
 package com.carl.editor
 
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -15,6 +16,19 @@ import androidx.compose.runtime.setValue
 import com.carl.editor.ui.theme.CarlTheme
 
 class MainActivity : ComponentActivity() {
+    private fun persistMediaUriPermission(uri: Uri) {
+        try {
+            contentResolver.takePersistableUriPermission(
+                uri,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION
+            )
+        } catch (_: SecurityException) {
+            // Some picker providers grant only a transient read permission. Playback still works
+            // for the current session; a future persistence layer must handle relinking.
+        } catch (_: UnsupportedOperationException) {
+            // Provider does not expose persistable permissions.
+        }
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -25,6 +39,7 @@ class MainActivity : ComponentActivity() {
                 contract = ActivityResultContracts.PickVisualMedia()
             ) { uri: Uri? ->
                 videoUri = uri
+                    uri?.let { persistMediaUriPermission(it) }
             }
 
             CarlTheme {
