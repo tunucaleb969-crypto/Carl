@@ -182,9 +182,14 @@ fun PreviewScreen(
                 )
                 .build()
         }
+        // Rebuilds are required when timeline/effect state changes, but they must not make
+        // editing feel like a reset. Preserve the user's timeline position across the rebuild,
+        // clamping naturally if the edit shortened the project.
+        val preservedTimelinePositionMs = positionMs
         exoPlayer.setVideoEffects(globalCrop.toEffects() + globalTransform.toEffects() + colorAdjustment.toEffects())
         exoPlayer.setMediaItems(mediaItems)
         exoPlayer.prepare()
+        seekTimelineMs(preservedTimelinePositionMs)
         exoPlayer.playWhenReady = isPlaying
         applySpeedForCurrentItem()
     }
