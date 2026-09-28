@@ -24,13 +24,15 @@ class GlobalTransformTest {
     }
 
     @Test
-    fun zoomProducesAVisualEffect() {
-        assertEquals(1, GlobalTransform(zoom = 1.5f).toEffects().size)
+    fun zoomStateIsPreservedWithinSupportedRange() {
+        assertEquals(1.5f, GlobalTransform(zoom = 1.5f).normalizedZoom)
     }
 
     @Test
-    fun panPreservesAValidTransformEffect() {
-        assertEquals(1, GlobalTransform(panX = 0.2f).toEffects().size)
+    fun panStateIsPreservedWithinSupportedRange() {
+        val transform = GlobalTransform(panX = 0.2f, panY = -0.3f)
+        assertEquals(0.2f, transform.normalizedPanX)
+        assertEquals(-0.3f, transform.normalizedPanY)
     }
 
     @Test
