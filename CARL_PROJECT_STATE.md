@@ -10,12 +10,13 @@ The timeline clip-management milestone is implemented and the latest code checkp
 
 ## Last verified code checkpoint
 
-- Commit: 87a8f5b860c06a4677afc7e414afc0899c9dba86
+- Commit: 46192b10777f15bf916c1f87aaa1b93f1e9f2dc8
 - Branch: main
-- GitHub Actions run: 117
-- Run ID: 36440093055
-- Build result: success
-- Verification: GitHub Actions `assembleDebug` completed successfully.
+- GitHub Actions run: 120
+- Run ID: 36441329534
+- Unit tests: success
+- Debug APK build: success
+- Verification: GitHub Actions `testDebugUnitTest` and `assembleDebug` both completed successfully.
 - Device verification: not performed.
 
 ## Completed timeline work
@@ -33,6 +34,7 @@ The timeline clip-management milestone is implemented and the latest code checkp
 - Horizontal timeline scrolling while zoomed.
 - Playhead auto-scrolls toward the visible working area during playback.
 - Unit tests for core EditState clip deletion, duplication, reordering, and invalid operations.
+- Undo/redo history tests covering undo, redo, redo-branch clearing, no-op edits, and sync behavior.
 
 ## Current architecture
 
@@ -67,7 +69,6 @@ The export success UI currently reports app-storage output; open/share output ac
 - GitHub Actions verifies the debug APK build.
 - The current workflow does not constitute real-device/emulator verification.
 - Device playback/export behavior still needs verification on Android hardware.
-- The build workflow currently focuses on APK assembly; unit-test execution should be strengthened as part of the reliability phase.
 
 ## Next logical milestone
 
