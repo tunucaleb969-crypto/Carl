@@ -1,7 +1,6 @@
 package com.carl.editor.persistence
 
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import com.carl.editor.EditorProjectState
 import com.carl.editor.canvas.AspectRatioPreset
 import com.carl.editor.canvas.CanvasSettings
@@ -140,10 +139,9 @@ object ProjectStateSerializer {
     private fun canvasToJson(value: CanvasSettings): JSONObject =
         JSONObject()
             .put("aspectRatio", value.aspectRatio.name)
-            // Canvas backgrounds are rendered as regular UI colors. Persist their stable sRGB
-            // ARGB representation rather than Compose's internal packed ULong, whose encoding is
-            // an implementation detail and can vary with color-space representation.
-            .put("backgroundColor", value.backgroundColor.toArgb())
+            // Preserve Compose's complete packed color value. Converting to ARGB would discard
+            // color-space/precision information and break exact project round trips.
+            .put("backgroundColor", value.backgroundColor.value.toString())
 
     private fun canvasFromJson(json: JSONObject): CanvasSettings =
         CanvasSettings(
@@ -151,16 +149,14 @@ object ProjectStateSerializer {
                 AspectRatioPreset.valueOf(json.getString("aspectRatio"))
             }.getOrDefault(AspectRatioPreset.ORIGINAL),
             backgroundColor = runCatching {
-                // Accept both the current numeric ARGB representation and legacy decimal-string
-                // representations written by earlier schema-3 builds.
+                // Current files store the complete packed Compose color as an unsigned decimal string.
+                // Also accept the intermediate ARGB integer representation.
                 val raw = json.get("backgroundColor")
-                val argb = when (raw) {
-                    is Number -> raw.toInt()
-                    is String -> raw.toLongOrNull()?.toInt()
-                        ?: java.lang.Long.parseUnsignedLong(raw).toInt()
+                when (raw) {
+                    is String -> Color(raw.toULong())
+                    is Number -> Color(raw.toInt())
                     else -> error("Unsupported background color representation")
                 }
-                Color(argb)
             }.getOrDefault(Color.Black)
         )
 }
