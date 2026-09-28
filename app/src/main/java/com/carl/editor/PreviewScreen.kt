@@ -1,5 +1,7 @@
 package com.carl.editor
 
+import android.content.ActivityNotFoundException
+import android.content.Intent
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.view.LayoutInflater
@@ -465,6 +467,34 @@ fun PreviewScreen(
                 exportJob?.cancel()
                 exportJob = null
                 exportProgress = null
+            },
+            onOpen = { uri ->
+                runCatching {
+                    context.startActivity(
+                        Intent(Intent.ACTION_VIEW, uri).apply {
+                            setDataAndType(uri, "video/mp4")
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+                    )
+                }.onFailure { error ->
+                    if (error is ActivityNotFoundException) Unit
+                }
+            },
+            onShare = { uri ->
+                runCatching {
+                    context.startActivity(
+                        Intent.createChooser(
+                            Intent(Intent.ACTION_SEND).apply {
+                                type = "video/mp4"
+                                putExtra(Intent.EXTRA_STREAM, uri)
+                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            },
+                            "Share Carl export"
+                        )
+                    )
+                }.onFailure { error ->
+                    if (error is ActivityNotFoundException) Unit
+                }
             }
         )
     }

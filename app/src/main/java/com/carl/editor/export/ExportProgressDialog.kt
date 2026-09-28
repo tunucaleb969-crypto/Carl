@@ -30,7 +30,9 @@ private val DANGER = Color(0xFFFF5449)
 fun ExportProgressDialog(
     progress: ExportProgress?,
     onDismiss: () -> Unit,
-    onCancel: () -> Unit
+    onCancel: () -> Unit,
+    onOpen: (android.net.Uri) -> Unit = {},
+    onShare: (android.net.Uri) -> Unit = {}
 ) {
     if (progress == null) return
 
@@ -69,8 +71,14 @@ fun ExportProgressDialog(
                             style = MaterialTheme.typography.bodySmall
                         )
                         Spacer(modifier = Modifier.height(16.dp))
+                        TextButton(onClick = { onOpen(progress.outputUri) }) {
+                            Text("Open", color = ACCENT)
+                        }
+                        TextButton(onClick = { onShare(progress.outputUri) }) {
+                            Text("Share", color = ACCENT)
+                        }
                         TextButton(onClick = onDismiss) {
-                            Text("Done", color = ACCENT)
+                            Text("Done", color = Color.White)
                         }
                     }
                     is ExportProgress.Failure -> {

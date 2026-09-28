@@ -11,6 +11,7 @@ import androidx.media3.common.Effect
 import androidx.media3.common.MediaItem
 import androidx.media3.common.audio.AudioProcessor
 import androidx.media3.common.audio.SpeedProvider
+import androidx.core.content.FileProvider
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.transformer.Composition
 import androidx.media3.transformer.Effects
@@ -100,7 +101,7 @@ class ExportEngine(private val context: Context) {
                 .addListener(object : Transformer.Listener {
                     override fun onCompleted(finishedComposition: Composition, exportResult: ExportResult) {
                         if (isTerminal.compareAndSet(false, true)) {
-                            val result = trySend(ExportProgress.Success(Uri.fromFile(outputFile)))
+                            val result = trySend(ExportProgress.Success(FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", outputFile)))
                             completedSuccessfully.set(result.isSuccess)
                             close()
                         }
