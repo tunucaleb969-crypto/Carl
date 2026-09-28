@@ -14,6 +14,11 @@ The timeline clip-management milestone is implemented. Variable-speed timeline c
 - Crop unit coverage checkpoint: GitHub Actions run 142 succeeded.
 - Current transform batch is under verification; the first test run exposed effect-construction failures and those failures are being fixed before the batch is marked complete.
 
+## Durable research update (2026-09-28)
+- See docs/CARL_ENGINEERING_RESEARCH.md for the fresh API 36, adaptive UI, Media3, persistence, and testing findings.
+- API 36 migration is now an immediate engineering requirement, but it is intentionally not mixed with a Media3 major upgrade.
+- See project.md for the durable new-chat continuation workflow.
+
 ## Current Phase B progress
 
 - Global crop model and controls are wired into the contextual tool dock, preview, and export effect pipeline.
