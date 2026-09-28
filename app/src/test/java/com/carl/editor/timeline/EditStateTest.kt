@@ -23,7 +23,8 @@ class EditStateTest {
     @Test
     fun duplicateInsertsIndependentClipImmediatelyAfterOriginal() {
         val result = state().duplicateClip("b")
-        assertEquals(listOf("a", "b", "c"), result.clips.map { it.id }.filter { it == "a" || it == "b" || it == "c" })
+        assertEquals(4, result.clips.size)
+        assertEquals(listOf("a", "b", result.clips[2].id, "c"), result.clips.map { it.id })
         assertNotEquals("b", result.clips[2].id)
         assertEquals(result.clips[1].sourceStartMs, result.clips[2].sourceStartMs)
         assertEquals(result.clips[1].sourceEndMs, result.clips[2].sourceEndMs)
