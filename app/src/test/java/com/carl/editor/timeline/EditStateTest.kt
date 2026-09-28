@@ -104,6 +104,31 @@ class EditStateTest {
     }
 
     @Test
+    fun reconcileSourceDurationClampsAndDropsInvalidClips() {
+        val original = EditState(
+            clips = listOf(
+                Clip(id = "keep", sourceStartMs = 0L, sourceEndMs = 1_000L),
+                Clip(id = "clamp", sourceStartMs = 1_000L, sourceEndMs = 3_000L),
+                Clip(id = "drop", sourceStartMs = 3_000L, sourceEndMs = 4_000L)
+            )
+        )
+
+        val result = original.reconcileSourceDuration(2_000L)
+
+        assertEquals(listOf("keep", "clamp"), result.clips.map { it.id })
+        assertEquals(1_000L, result.clips[0].sourceEndMs)
+        assertEquals(2_000L, result.clips[1].sourceEndMs)
+    }
+
+    @Test
+    fun reconcileSourceDurationSeedsEmptyTimeline() {
+        val result = EditState().reconcileSourceDuration(2_000L)
+
+        assertEquals(listOf(0L), result.clips.map { it.sourceStartMs })
+        assertEquals(listOf(2_000L), result.clips.map { it.sourceEndMs })
+    }
+
+    @Test
     fun speedChangesTimelineDurationWithoutChangingSourceRange() {
         val original = state()
         val changed = original.withSpeed("b", 2f)
