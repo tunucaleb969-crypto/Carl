@@ -47,7 +47,7 @@ fun ToolDock(
     onSelectTool: (ToolTab?) -> Unit,
     globalTransform: GlobalTransform,
     globalCrop: GlobalCrop,
-    onSelectCropInset: (Float) -> Unit,
+    onSelectCropInsets: (Float, Float, Float, Float) -> Unit,
     onRotate: () -> Unit,
     onToggleFlipHorizontal: () -> Unit,
     onToggleFlipVertical: () -> Unit,
@@ -109,7 +109,7 @@ fun ToolDock(
             )
             ToolTab.CROP -> GlobalCropControls(
                 crop = globalCrop,
-                onSelectInset = onSelectCropInset
+                onSelectInset = { inset -> onSelectCropInsets(inset, inset, inset, inset) }
             )
             ToolTab.CANVAS -> CanvasControls(
                 settings = canvasSettings,
