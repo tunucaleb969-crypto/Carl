@@ -413,26 +413,26 @@ fun PreviewScreen(uri: Uri, onBack: () -> Unit) {
                 onSelectTool = { selectedTool = it },
                 globalTransform = globalTransform,
                 globalCrop = globalCrop,
-                onSelectCropInsets = { left, right, top, bottom -> globalCrop = GlobalCrop(left, right, top, bottom) },
-                onRotate = { globalTransform = globalTransform.rotatedClockwise() },
+                onSelectCropInsets = { left, right, top, bottom -> history = history.push(history.present.copy(globalCrop = GlobalCrop(left, right, top, bottom))) },
+                onRotate = { history = history.push(history.present.copy(globalTransform = globalTransform.rotatedClockwise())) },
                 onToggleFlipHorizontal = {
-                    globalTransform = globalTransform.copy(flipHorizontal = !globalTransform.flipHorizontal)
+                    history = history.push(history.present.copy(globalTransform = globalTransform.copy(flipHorizontal = !globalTransform.flipHorizontal)))
                 },
                 onToggleFlipVertical = {
-                    globalTransform = globalTransform.copy(flipVertical = !globalTransform.flipVertical)
+                    history = history.push(history.present.copy(globalTransform = globalTransform.copy(flipVertical = !globalTransform.flipVertical)))
                 },
-                onZoomOut = { globalTransform = globalTransform.zoomedBy(-0.25f) },
-                onZoomIn = { globalTransform = globalTransform.zoomedBy(0.25f) },
-                onPan = { dx, dy -> globalTransform = globalTransform.pannedBy(dx, dy) },
-                onResetFraming = { globalTransform = globalTransform.resetFraming() },
+                onZoomOut = { history = history.push(history.present.copy(globalTransform = globalTransform.zoomedBy(-0.25f))) },
+                onZoomIn = { history = history.push(history.present.copy(globalTransform = globalTransform.zoomedBy(0.25f))) },
+                onPan = { dx, dy -> history = history.push(history.present.copy(globalTransform = globalTransform.pannedBy(dx, dy))) },
+                onResetFraming = { history = history.push(history.present.copy(globalTransform = globalTransform.resetFraming())) },
                 canvasSettings = canvasSettings,
-                onSelectAspectRatio = { preset -> canvasSettings = canvasSettings.copy(aspectRatio = preset) },
-                onSelectBackgroundColor = { color -> canvasSettings = canvasSettings.copy(backgroundColor = color) },
+                onSelectAspectRatio = { preset -> history = history.push(history.present.copy(canvasSettings = canvasSettings.copy(aspectRatio = preset))) },
+                onSelectBackgroundColor = { color -> history = history.push(history.present.copy(canvasSettings = canvasSettings.copy(backgroundColor = color))) },
                 colorAdjustment = colorAdjustment,
-                onBrightnessChange = { colorAdjustment = colorAdjustment.copy(brightness = it) },
-                onContrastChange = { colorAdjustment = colorAdjustment.copy(contrast = it) },
-                onSaturationChange = { colorAdjustment = colorAdjustment.copy(saturation = it) },
-                onResetColor = { colorAdjustment = ColorAdjustment() }
+                onBrightnessChange = { value -> history = history.push(history.present.copy(colorAdjustment = colorAdjustment.copy(brightness = value))) },
+                onContrastChange = { value -> history = history.push(history.present.copy(colorAdjustment = colorAdjustment.copy(contrast = value))) },
+                onSaturationChange = { value -> history = history.push(history.present.copy(colorAdjustment = colorAdjustment.copy(saturation = value))) },
+                onResetColor = { history = history.push(history.present.copy(colorAdjustment = ColorAdjustment())) }
             )
         }
 
