@@ -53,4 +53,6 @@ dependencies {
     implementation("androidx.media3:media3-transformer:1.4.1")
     implementation("androidx.compose.material:material-icons-extended:1.6.1")
     implementation("androidx.compose.foundation:foundation:1.6.1")
+
+    testImplementation("junit:junit:4.13.2")
 }
