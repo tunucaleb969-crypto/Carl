@@ -33,7 +33,7 @@ The timeline clip-management milestone is implemented and the latest code checkp
 - Timeline zoom from 1x to 4x.
 - Horizontal timeline scrolling while zoomed.
 - Playhead auto-scrolls toward the visible working area during playback.
-- Unit tests for core EditState clip deletion, duplication, reordering, and invalid operations.
+- Unit tests for core EditState clip deletion, duplication, reordering, invalid operations, split behavior, speed duration, and speed validation.
 - Undo/redo history tests covering undo, redo, redo-branch clearing, no-op edits, and sync behavior.
 
 ## Current architecture
@@ -75,7 +75,7 @@ The export success UI currently reports app-storage output; open/share output ac
 Continue Phase A, then move into Phase B.
 
 Immediate recommended work:
-1. Strengthen timeline unit-test coverage, especially undo/redo and ordering edge cases.
+1. Strengthen timeline unit-test coverage, especially undo/redo, ordering, split, and speed edge cases.
 2. Verify the zoom/scroll implementation against empty, single-clip, and multi-clip timelines.
 3. Then begin Phase B core clip editing, starting with crop/pan/zoom while preserving preview/export parity.
 
