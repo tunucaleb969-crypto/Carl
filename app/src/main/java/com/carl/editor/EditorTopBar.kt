@@ -10,8 +10,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.FileUpload
-import androidx.compose.material.icons.filled.Redo
-import androidx.compose.material.icons.filled.Undo
+import androidx.compose.material.icons.automirrored.filled.Redo
+import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -62,7 +62,7 @@ fun EditorTopBar(
 
         IconButton(onClick = onUndo, enabled = canUndo) {
             Icon(
-                Icons.Filled.Undo,
+                Icons.AutoMirrored.Filled.Undo,
                 contentDescription = "Undo",
                 tint = if (canUndo) Color.White else Color.White.copy(alpha = 0.35f)
             )
@@ -70,7 +70,7 @@ fun EditorTopBar(
 
         IconButton(onClick = onRedo, enabled = canRedo) {
             Icon(
-                Icons.Filled.Redo,
+                Icons.AutoMirrored.Filled.Redo,
                 contentDescription = "Redo",
                 tint = if (canRedo) Color.White else Color.White.copy(alpha = 0.35f)
             )
