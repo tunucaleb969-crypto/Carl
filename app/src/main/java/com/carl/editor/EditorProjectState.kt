@@ -45,14 +45,16 @@ data class EditorProjectState(
     fun withSpeed(clipId: String, speed: Float): EditorProjectState =
         copy(timeline = timeline.withSpeed(clipId, speed))
 
-    fun updateClip(clipId: String, update: (Clip) -> Clip): EditorProjectState =
-        copy(
-            timeline = timeline.copy(
-                clips = timeline.clips.map { clip ->
-                    if (clip.id == clipId) update(clip) else clip
-                }
-            )
-        )
+    /**
+     * Applies a single-clip mutation through the timeline model so the project's mutation
+     * semantics stay identical to EditState.updateClip().
+     *
+     * In particular, a missing clip is a true no-op and returns the same project instance.
+     */
+    fun updateClip(clipId: String, update: (Clip) -> Clip): EditorProjectState {
+        val updatedTimeline = timeline.updateClip(clipId, update)
+        return if (updatedTimeline === timeline) this else copy(timeline = updatedTimeline)
+    }
 
     fun withClips(clips: List<Clip>): EditorProjectState =
         copy(timeline = timeline.copy(clips = clips))
