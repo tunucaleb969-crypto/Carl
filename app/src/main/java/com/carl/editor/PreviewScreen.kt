@@ -22,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,6 +44,7 @@ import com.carl.editor.export.ExportProgress
 import com.carl.editor.export.ExportProgressDialog
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import com.carl.editor.effects.ColorAdjustment
 import com.carl.editor.effects.GlobalTransform
 import com.carl.editor.timeline.Clip
@@ -89,6 +91,7 @@ fun PreviewScreen(uri: Uri, onBack: () -> Unit) {
     var exportProgress by remember { mutableStateOf<ExportProgress?>(null) }
     var exportJob by remember { mutableStateOf<Job?>(null) }
     val exportEngine = remember(context) { ExportEngine(context) }
+    val exportScope = rememberCoroutineScope()
 
     val committedClips = history.present.clips
     val displayClips = draftClips ?: committedClips
@@ -233,7 +236,7 @@ fun PreviewScreen(uri: Uri, onBack: () -> Unit) {
                 onExport = {
                     exportJob?.cancel()
                     exportProgress = ExportProgress.InProgress(0)
-                    exportJob = kotlinx.coroutines.CoroutineScope(Dispatchers.Main.immediate).launch {
+                    exportJob = exportScope.launch {
                         exportEngine.export(uri, committedClips).collect { progress ->
                             exportProgress = progress
                         }
