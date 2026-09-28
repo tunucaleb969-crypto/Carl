@@ -13,6 +13,10 @@ data class Clip(
     val sourceEndMs: Long,
     val speed: Float = 1f
 ) {
+    init {
+        require(speed.isFinite() && speed > 0f) { "Clip speed must be finite and greater than zero." }
+    }
+
     /** How long this clip spans in the *source* media, unaffected by speed. */
     val sourceDurationMs: Long
         get() = (sourceEndMs - sourceStartMs).coerceAtLeast(0L)
