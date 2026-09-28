@@ -135,6 +135,14 @@ fun PreviewScreen(uri: Uri, onBack: () -> Unit) {
         }
     }
 
+    LaunchedEffect(positionMs, committedClips) {
+        val index = history.present.clipIndexAt(positionMs)
+        val clipId = history.present.clips.getOrNull(index)?.id
+        if (clipId != null && clipId != selectedClipId) {
+            selectedClipId = clipId
+        }
+    }
+
     // Rebuild the ExoPlayer playlist whenever the committed clip list OR either whole-video effect
     // set changes (split, trim commit, undo, redo, speed change, rotate, flip, color adjustment) -
     // never during a live drag, which only touches draftClips. setVideoEffects() must be called
@@ -314,7 +322,13 @@ fun PreviewScreen(uri: Uri, onBack: () -> Unit) {
                 selectedClipId = selectedClipId,
                 currentClipSpeed = currentClipSpeed,
                 onSeek = { seekTimelineMs(it) },
-                onSelectClip = { selectedClipId = it },
+                onSelectClip = { id ->
+                    selectedClipId = id
+                    val index = history.present.indexOfClip(id)
+                    if (index >= 0) {
+                        seekTimelineMs(history.present.clipStartOnTimeline(index))
+                    }
+                },
                 onDeleteClip = {
                     val id = selectedClipId
                     if (id != null) {
