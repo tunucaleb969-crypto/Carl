@@ -417,7 +417,7 @@ fun PreviewScreen(uri: Uri, onBack: () -> Unit) {
                 onSelectTool = { selectedTool = it },
                 globalTransform = globalTransform,
                 globalCrop = globalCrop,
-                onSelectCropInset = { globalCrop = GlobalCrop(it) },
+                onSelectCropInsets = { left, right, top, bottom -> globalCrop = GlobalCrop(left, right, top, bottom) },
                 onRotate = { globalTransform = globalTransform.rotatedClockwise() },
                 onToggleFlipHorizontal = {
                     globalTransform = globalTransform.copy(flipHorizontal = !globalTransform.flipHorizontal)
