@@ -9,7 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Flip
-import androidx.compose.material.icons.filled.RotateRight
+import androidx.compose.material.icons.automirrored.filled.RotateRight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -44,7 +44,7 @@ fun GlobalTransformControls(
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             TextButton(onClick = onRotate) {
-                Icon(Icons.Filled.RotateRight, contentDescription = "Rotate", tint = Color.White)
+                Icon(Icons.AutoMirrored.Filled.RotateRight, contentDescription = "Rotate", tint = Color.White)
                 Text(" ${transform.rotationDegrees.toInt()}°", color = Color.White)
             }
             TextButton(onClick = onToggleFlipHorizontal) {
