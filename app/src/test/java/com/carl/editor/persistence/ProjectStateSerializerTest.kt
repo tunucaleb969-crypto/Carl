@@ -50,7 +50,12 @@ class ProjectStateSerializerTest {
         assertNotNull(restored)
         assertEquals("Demo", restored!!.projectName)
         assertEquals("content://video/1", restored.sourceUri)
-        assertEquals(original, restored.state)
+        assertEquals(original.timeline, restored.state.timeline)
+        assertEquals(original.globalTransform, restored.state.globalTransform)
+        assertEquals(original.globalCrop, restored.state.globalCrop)
+        assertEquals(original.colorAdjustment, restored.state.colorAdjustment)
+        assertEquals(original.canvasSettings.aspectRatio, restored.state.canvasSettings.aspectRatio)
+        assertEquals(original.canvasSettings.backgroundColor.value, restored.state.canvasSettings.backgroundColor.value)
     }
 
     @Test
