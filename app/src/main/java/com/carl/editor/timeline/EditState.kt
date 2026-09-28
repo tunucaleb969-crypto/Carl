@@ -63,6 +63,37 @@ data class EditState(
         return copy(clips = newClips)
     }
 
+    /** Returns the index of the clip with [clipId], or -1 when it is not on the timeline. */
+    fun indexOfClip(clipId: String): Int = clips.indexOfFirst { it.id == clipId }
+
+    /** Deletes the selected clip. Deleting the last clip is allowed and leaves an empty timeline. */
+    fun deleteClip(clipId: String): EditState {
+        val index = indexOfClip(clipId)
+        if (index == -1) return this
+        return copy(clips = clips.toMutableList().also { it.removeAt(index) })
+    }
+
+    /** Duplicates a clip immediately after itself with a new stable identity. */
+    fun duplicateClip(clipId: String): EditState {
+        val index = indexOfClip(clipId)
+        if (index == -1) return this
+        val original = clips[index]
+        val duplicate = original.copy(id = java.util.UUID.randomUUID().toString())
+        return copy(clips = clips.toMutableList().also { it.add(index + 1, duplicate) })
+    }
+
+    /** Moves a clip one position toward the start (-1) or end (+1) of the timeline. */
+    fun moveClip(clipId: String, direction: Int): EditState {
+        val index = indexOfClip(clipId)
+        if (index == -1 || direction == 0) return this
+        val target = index + direction.coerceIn(-1, 1)
+        if (target !in clips.indices) return this
+        return copy(clips = clips.toMutableList().also {
+            val moved = it.removeAt(index)
+            it.add(target, moved)
+        })
+    }
+
     /** Sets the playback-rate multiplier for the clip with [clipId], clamped to a sane range. */
     fun withSpeed(clipId: String, speed: Float): EditState {
         val clamped = speed.coerceIn(0.25f, 4f)
