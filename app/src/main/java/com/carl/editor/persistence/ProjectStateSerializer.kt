@@ -139,9 +139,9 @@ object ProjectStateSerializer {
     private fun canvasToJson(value: CanvasSettings): JSONObject =
         JSONObject()
             .put("aspectRatio", value.aspectRatio.name)
-            // Preserve Compose's complete packed color value. Converting to ARGB would discard
-            // color-space/precision information and break exact project round trips.
-            .put("backgroundColor", value.backgroundColor.value.toString())
+            // Persist Compose's complete packed color as a signed Long. This preserves the
+            // exact packed value without relying on ULong JSON/string handling.
+            .put("backgroundColor", value.backgroundColor.value.toLong())
 
     private fun canvasFromJson(json: JSONObject): CanvasSettings =
         CanvasSettings(
@@ -149,12 +149,13 @@ object ProjectStateSerializer {
                 AspectRatioPreset.valueOf(json.getString("aspectRatio"))
             }.getOrDefault(AspectRatioPreset.ORIGINAL),
             backgroundColor = runCatching {
-                // Current files store the complete packed Compose color as an unsigned decimal string.
-                // Also accept the intermediate ARGB integer representation.
+                // Current files store the complete packed Compose color as a signed Long.
+                // Also accept the earlier unsigned-string and ARGB representations.
                 val raw = json.get("backgroundColor")
                 when (raw) {
-                    is String -> Color(raw.toULong())
-                    is Number -> Color(raw.toInt())
+                    is Number -> Color(raw.toLong())
+                    is String -> runCatching { Color(raw.toLong()) }
+                        .getOrElse { Color(java.lang.Long.parseUnsignedLong(raw)) }
                     else -> error("Unsupported background color representation")
                 }
             }.getOrDefault(Color.Black)
