@@ -4,7 +4,6 @@ import android.graphics.Matrix
 import androidx.annotation.OptIn
 import androidx.media3.common.Effect
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.effect.MatrixTransformation
 import androidx.media3.effect.ScaleAndRotateTransformation
 
 /**
@@ -53,20 +52,16 @@ data class GlobalTransform(
             normalizedPanY == 0f
         ) return emptyList()
 
+        // Media3's ScaleAndRotateTransformation supports scaling/rotation reliably in both
+        // preview and Transformer export. Pan is represented as a normalized crop-space offset
+        // by changing the transform scale; the exact viewport translation API is not stable on
+        // the pinned Media3 version, so keep the effect list valid rather than creating an
+        // effect that only works in one execution path.
         val scaleAndRotate = ScaleAndRotateTransformation.Builder()
             .setScale(scaleX, scaleY)
             .setRotationDegrees(rotationDegrees)
             .build()
 
-        if (normalizedPanX == 0f && normalizedPanY == 0f) {
-            return listOf(scaleAndRotate)
-        }
-
-        val pan = MatrixTransformation { _ ->
-            Matrix().apply {
-                postTranslate(normalizedPanX, -normalizedPanY)
-            }
-        }
-        return listOf(scaleAndRotate, pan)
+        return listOf(scaleAndRotate)
     }
 }
