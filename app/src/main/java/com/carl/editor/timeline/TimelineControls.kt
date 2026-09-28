@@ -4,9 +4,14 @@ import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.ContentCut
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
@@ -32,8 +37,14 @@ fun TimelineControls(
     durationMs: Long,
     isPlaying: Boolean,
     clips: List<Clip>,
+    selectedClipId: String?,
     currentClipSpeed: Float,
     onSeek: (Long) -> Unit,
+    onSelectClip: (String) -> Unit,
+    onDeleteClip: () -> Unit,
+    onDuplicateClip: () -> Unit,
+    onMoveClipUp: () -> Unit,
+    onMoveClipDown: () -> Unit,
     onPlayPause: () -> Unit,
     onSplit: () -> Unit,
     onSetSpeed: (Float) -> Unit,
@@ -98,14 +109,27 @@ fun TimelineControls(
                     .clip(RoundedCornerShape(4.dp))
             ) {
                 clips.forEach { clip ->
-                    ClipThumbnailStrip(
-                        uri = uri,
-                        clip = clip,
-                        thumbnailCount = THUMBNAILS_PER_CLIP,
+                    val isSelected = clip.id == selectedClipId
+                    Box(
                         modifier = Modifier
                             .weight(clip.durationMs.toFloat().coerceAtLeast(1f))
                             .fillMaxHeight()
-                    )
+                            .clickable { onSelectClip(clip.id) }
+                    ) {
+                        ClipThumbnailStrip(
+                            uri = uri,
+                            clip = clip,
+                            thumbnailCount = THUMBNAILS_PER_CLIP,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                        if (isSelected) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(ACCENT.copy(alpha = 0.18f))
+                            )
+                        }
+                    }
                 }
             }
 
@@ -192,6 +216,51 @@ fun TimelineControls(
         }
 
         Spacer(modifier = Modifier.height(12.dp))
+
+        val selectedIndex = clips.indexOfFirst { it.id == selectedClipId }
+        if (selectedIndex >= 0) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    "Clip " + (selectedIndex + 1) + " of " + clips.size,
+                    color = Color.White,
+                    style = MaterialTheme.typography.labelLarge
+                )
+                Row {
+                    IconButton(
+                        onClick = onMoveClipUp,
+                        enabled = selectedIndex > 0
+                    ) {
+                        Icon(
+                            Icons.Filled.ArrowUpward,
+                            contentDescription = "Move clip earlier",
+                            tint = if (selectedIndex > 0) Color.White else Color.White.copy(alpha = 0.3f)
+                        )
+                    }
+                    IconButton(
+                        onClick = onMoveClipDown,
+                        enabled = selectedIndex < clips.lastIndex
+                    ) {
+                        Icon(
+                            Icons.Filled.ArrowDownward,
+                            contentDescription = "Move clip later",
+                            tint = if (selectedIndex < clips.lastIndex) Color.White else Color.White.copy(alpha = 0.3f)
+                        )
+                    }
+                    IconButton(onClick = onDuplicateClip) {
+                        Icon(Icons.Filled.ContentCopy, contentDescription = "Duplicate clip", tint = Color.White)
+                    }
+                    IconButton(onClick = onDeleteClip) {
+                        Icon(Icons.Filled.Delete, contentDescription = "Delete clip", tint = Color.White)
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(2.dp))
 
         // Undo/Redo moved to EditorTopBar (redesign Phase 2) - this row now only holds
         // Play/Pause and Split, to avoid duplicate controls for the same actions. Icon buttons
