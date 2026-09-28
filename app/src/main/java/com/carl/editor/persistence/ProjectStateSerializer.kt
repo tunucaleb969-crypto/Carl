@@ -139,7 +139,7 @@ object ProjectStateSerializer {
     private fun canvasToJson(value: CanvasSettings): JSONObject =
         JSONObject()
             .put("aspectRatio", value.aspectRatio.name)
-            .put("backgroundColor", java.lang.Long.toUnsignedString(value.backgroundColor.value.toLong()))
+            .put("backgroundColor", value.backgroundColor.value.toString())
 
     private fun canvasFromJson(json: JSONObject): CanvasSettings =
         CanvasSettings(
@@ -147,7 +147,7 @@ object ProjectStateSerializer {
                 AspectRatioPreset.valueOf(json.getString("aspectRatio"))
             }.getOrDefault(AspectRatioPreset.ORIGINAL),
             backgroundColor = runCatching {
-                Color(java.lang.Long.parseUnsignedLong(json.getString("backgroundColor")).toULong())
+                Color(json.getString("backgroundColor").toULong())
             }.getOrDefault(Color.Black)
         )
 }
