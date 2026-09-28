@@ -31,5 +31,10 @@ Builds run automatically via GitHub Actions on every push to `main`. Check the *
 
 No local build steps required; this project is developed entirely through GitHub's web editor + Actions.
 
+## Continuity
+- project.md is the new-chat continuation entry point.
+- PROJECT_STATE.md and CARL_PROJECT_STATE.md remain the detailed progress records.
+- docs/CARL_ENGINEERING_RESEARCH.md is the durable research knowledge base.
+
 ## Development status
 See `PROJECT_STATE.md` for current milestone, completed features, and next steps.
