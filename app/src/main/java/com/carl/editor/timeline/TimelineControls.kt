@@ -3,9 +3,9 @@ package com.carl.editor.timeline
 import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -24,11 +24,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.dp
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
-import kotlin.math.max
 
 private val ACCENT = Color(0xFF00E5A0)
 private val SURFACE = Color(0xFF121212)
@@ -65,16 +64,13 @@ fun TimelineControls(
     val scrollState = rememberScrollState()
     val density = LocalDensity.current
 
+    fun contentWidthPx(): Float = maxOf(trackWidthPx, trackWidthPx * zoom)
     fun pxToDp(px: Float): androidx.compose.ui.unit.Dp = with(density) { px.toDp() }
-
-    fun contentWidthPx(): Float = max(trackWidthPx, trackWidthPx * zoom)
 
     fun pxToMs(px: Float): Long {
         val width = contentWidthPx()
         if (durationMs == 0L || width == 0f) return 0L
-        return (((px + scrollState.value) / width) * durationMs)
-            .toLong()
-            .coerceIn(0L, durationMs)
+        return (((px + scrollState.value) / width) * durationMs).toLong().coerceIn(0L, durationMs)
     }
 
     fun pxDeltaToMsDelta(px: Float): Long {
@@ -95,12 +91,8 @@ fun TimelineControls(
         val viewportEnd = viewportStart + trackWidthPx
         val margin = trackWidthPx * 0.18f
         when {
-            playhead < viewportStart + margin ->
-                scrollState.animateScrollTo((playhead - margin).coerceAtLeast(0f).toInt())
-            playhead > viewportEnd - margin ->
-                scrollState.animateScrollTo(
-                    (playhead - trackWidthPx + margin).coerceAtLeast(0f).toInt()
-                )
+            playhead < viewportStart + margin -> scrollState.animateScrollTo((playhead - margin).coerceAtLeast(0f).toInt())
+            playhead > viewportEnd - margin -> scrollState.animateScrollTo((playhead - trackWidthPx + margin).coerceAtLeast(0f).toInt())
         }
     }
 
@@ -119,10 +111,7 @@ fun TimelineControls(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp)
-                .clip(RoundedCornerShape(4.dp))
-                .onGloballyPositioned { coords ->
-                    trackWidthPx = coords.size.width.toFloat()
-                }
+                .onGloballyPositioned { coords -> trackWidthPx = coords.size.width.toFloat() }
                 .horizontalScroll(scrollState, enabled = zoom > 1f)
         ) {
             Box(
@@ -130,9 +119,7 @@ fun TimelineControls(
                     .width(pxToDp(contentWidthPx()))
                     .height(56.dp)
                     .pointerInput(durationMs, zoom, trackWidthPx, scrollState.value) {
-                        detectDragGestures { change, _ ->
-                            onSeek(pxToMs(change.position.x))
-                        }
+                        detectDragGestures { change, _ -> onSeek(pxToMs(change.position.x)) }
                     }
             ) {
             // Clip filmstrip - each clip's width is proportional to its share of the timeline
@@ -179,7 +166,7 @@ fun TimelineControls(
                 val boundaryPx = msToPx(elapsed)
                 Box(
                     modifier = Modifier
-                        .offset(x = pxToDp(boundaryPx - 1f))
+                        .offset(x = withDp(boundaryPx - 1f))
                         .width(2.dp)
                         .height(40.dp)
                         .align(Alignment.CenterStart)
@@ -190,7 +177,7 @@ fun TimelineControls(
             // playhead
             Box(
                 modifier = Modifier
-                    .offset(x = pxToDp(msToPx(positionMs) - 2f))
+                    .offset(x = withDp(msToPx(positionMs) - 2f))
                     .width(4.dp)
                     .height(48.dp)
                     .align(Alignment.CenterStart)
@@ -201,7 +188,7 @@ fun TimelineControls(
             // grip mark so it reads as a draggable control, not just a colored block
             Box(
                 modifier = Modifier
-                    .offset(x = pxToDp(-8f))
+                    .offset(x = withDp(-8f))
                     .width(16.dp)
                     .height(48.dp)
                     .align(Alignment.CenterStart)
@@ -228,7 +215,7 @@ fun TimelineControls(
             // end trim handle (always the right edge of the timeline) - same grip treatment
             Box(
                 modifier = Modifier
-                    .offset(x = pxToDp(msToPx(durationMs) - 8f))
+                    .offset(x = withDp(msToPx(durationMs) - 8f))
                     .width(16.dp)
                     .height(48.dp)
                     .align(Alignment.CenterStart)
@@ -251,27 +238,17 @@ fun TimelineControls(
                         .background(Color.Black.copy(alpha = 0.4f), RoundedCornerShape(1.5.dp))
                 )
             }
+        }
+
             }
         }
 
         Spacer(modifier = Modifier.height(8.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text("Zoom", color = Color.White, style = MaterialTheme.typography.labelSmall)
-            Slider(
-                value = zoom,
-                onValueChange = { zoom = it },
-                valueRange = 1f..4f,
-                steps = 5,
-                modifier = Modifier.weight(1f)
-            )
+            Slider(value = zoom, onValueChange = { zoom = it }, valueRange = 1f..4f, steps = 5, modifier = Modifier.weight(1f))
             Text(zoom.toInt().toString() + "x", color = Color.White, style = MaterialTheme.typography.labelSmall)
         }
-
-        Spacer(modifier = Modifier.height(4.dp))
 
         Spacer(modifier = Modifier.height(12.dp))
 
@@ -372,3 +349,8 @@ private fun formatSpeedLabel(speed: Float): String {
     return "${trimmed}x"
 }
 
+@Composable
+private fun withDp(px: Float): androidx.compose.ui.unit.Dp {
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    return with(density) { px.toDp() }
+}
