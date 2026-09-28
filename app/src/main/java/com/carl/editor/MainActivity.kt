@@ -14,7 +14,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.carl.editor.persistence.CarlProjectRepository
-import com.carl.editor.persistence.ProjectStateSerializer
 import com.carl.editor.ui.theme.CarlTheme
 
 class MainActivity : ComponentActivity() {
