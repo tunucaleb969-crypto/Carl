@@ -425,6 +425,10 @@ fun PreviewScreen(uri: Uri, onBack: () -> Unit) {
                 onToggleFlipVertical = {
                     globalTransform = globalTransform.copy(flipVertical = !globalTransform.flipVertical)
                 },
+                onZoomOut = { globalTransform = globalTransform.zoomedBy(-0.25f) },
+                onZoomIn = { globalTransform = globalTransform.zoomedBy(0.25f) },
+                onPan = { dx, dy -> globalTransform = globalTransform.pannedBy(dx, dy) },
+                onResetFraming = { globalTransform = globalTransform.resetFraming() },
                 canvasSettings = canvasSettings,
                 onSelectAspectRatio = { preset -> canvasSettings = canvasSettings.copy(aspectRatio = preset) },
                 onSelectBackgroundColor = { color -> canvasSettings = canvasSettings.copy(backgroundColor = color) },
