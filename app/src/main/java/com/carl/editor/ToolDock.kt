@@ -36,6 +36,7 @@ private val SURFACE = Color(0xFF121212)
 
 private fun iconFor(tab: ToolTab): ImageVector = when (tab) {
     ToolTab.TRANSFORM -> Icons.Filled.RotateRight
+    ToolTab.CROP -> Icons.Filled.AspectRatio
     ToolTab.CANVAS -> Icons.Filled.AspectRatio
     ToolTab.COLOR -> Icons.Filled.Tune
 }
