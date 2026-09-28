@@ -256,7 +256,11 @@ fun PreviewScreen(uri: Uri, onBack: () -> Unit) {
                     exportJob?.cancel()
                     exportProgress = ExportProgress.InProgress(0)
                     exportJob = exportScope.launch {
-                        exportEngine.export(uri, committedClips).collect { progress ->
+                        exportEngine.export(
+                            uri,
+                            committedClips,
+                            globalTransform.toEffects() + colorAdjustment.toEffects()
+                        ).collect { progress ->
                             exportProgress = progress
                         }
                     }
