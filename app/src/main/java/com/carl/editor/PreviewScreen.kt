@@ -49,7 +49,6 @@ import com.carl.editor.effects.ColorAdjustment
 import com.carl.editor.effects.GlobalTransform
 import com.carl.editor.effects.GlobalCrop
 import com.carl.editor.timeline.Clip
-import com.carl.editor.timeline.EditHistory
 import com.carl.editor.timeline.EditState
 import com.carl.editor.timeline.TimelineControls
 import kotlinx.coroutines.Dispatchers
