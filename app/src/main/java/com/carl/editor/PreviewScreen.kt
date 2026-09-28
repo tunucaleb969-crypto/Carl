@@ -70,20 +70,17 @@ fun PreviewScreen(uri: Uri, onBack: () -> Unit) {
 
     var isPlaying by remember { mutableStateOf(true) }
     var positionMs by remember { mutableLongStateOf(0L) }
-    var history by remember { mutableStateOf(EditHistory()) }
+    var history by remember { mutableStateOf(EditorProjectHistory()) }
     var selectedClipId by remember { mutableStateOf<String?>(null) }
     var sourceDurationMs by remember { mutableLongStateOf(0L) }
     // Non-null only while a trim handle is actively being dragged; holds the live preview
     // so we don't rebuild the ExoPlayer playlist on every drag frame.
     var draftClips by remember { mutableStateOf<List<Clip>?>(null) }
     // Whole-video rotate/flip - NOT per-clip (see GlobalTransform kdoc for why).
-    var globalTransform by remember { mutableStateOf(GlobalTransform()) }
-    var globalCrop by remember { mutableStateOf(GlobalCrop()) }
-    // Whole-video brightness/contrast/saturation - same scope limitation as globalTransform.
-    var colorAdjustment by remember { mutableStateOf(ColorAdjustment()) }
-    // Output frame: aspect ratio + background fill. Pure Compose layout, independent of
-    // globalTransform / colorAdjustment / ExoPlayer video effects.
-    var canvasSettings by remember { mutableStateOf(CanvasSettings()) }
+    val globalTransform = history.present.globalTransform
+    val globalCrop = history.present.globalCrop
+    val colorAdjustment = history.present.colorAdjustment
+    val canvasSettings = history.present.canvasSettings
     // Which contextual tool panel is shown below the timeline (redesign Phase 3) - only one at
     // a time, replacing the previous always-visible vertical stack of all three panels.
     var selectedTool by remember { mutableStateOf<ToolTab?>(null) }
