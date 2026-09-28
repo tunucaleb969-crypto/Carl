@@ -79,7 +79,7 @@ fun PreviewScreen(
 
     var isPlaying by remember { mutableStateOf(true) }
     var positionMs by remember { mutableLongStateOf(0L) }
-    var history by remember { mutableStateOf(EditorProjectHistory(initialProjectState)) }
+    var history by remember { mutableStateOf(EditorProjectHistory(present = initialProjectState)) }
     var selectedClipId by remember { mutableStateOf<String?>(null) }
     var sourceDurationMs by remember { mutableLongStateOf(0L) }
     // Non-null only while a trim handle is actively being dragged; holds the live preview
