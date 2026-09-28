@@ -19,6 +19,32 @@ data class EditState(
         }
     }
 
+    /**
+     * Reconciles existing source ranges with a newly selected media asset.
+     *
+     * Existing edits are preserved where possible. Clips that fall completely outside the new
+     * source are removed, and surviving clips are clamped to the new duration.
+     */
+    fun reconcileSourceDuration(sourceDurationMs: Long): EditState {
+        if (sourceDurationMs <= 0L) return this
+        if (clips.isEmpty()) return withSourceDuration(sourceDurationMs)
+
+        val reconciled = clips.mapNotNull { clip ->
+            if (clip.sourceStartMs >= sourceDurationMs) {
+                null
+            } else {
+                val end = clip.sourceEndMs.coerceAtMost(sourceDurationMs)
+                if (end - clip.sourceStartMs >= MIN_CLIP_MS) {
+                    clip.copy(sourceEndMs = end)
+                } else {
+                    null
+                }
+            }
+        }
+
+        return if (reconciled == clips) this else copy(clips = reconciled)
+    }
+
     /** Where clip [index] begins on the concatenated timeline (sum of every earlier clip's timeline duration). */
     fun clipStartOnTimeline(index: Int): Long {
         return clips.take(index).sumOf { it.durationMs }
