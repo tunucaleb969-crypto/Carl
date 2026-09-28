@@ -161,3 +161,10 @@ Biggest structural gap: no CompositionPlayer yet (per-clip preview effects); exp
   - FileProvider paths cover Carl's app-specific Movies output and internal fallback storage.
 - CI run 200 passed for the documentation checkpoint before this batch.
 - The current persistence/export batch is awaiting its own CI verification; no device verification is claimed.
+
+## Continued overnight engineering batch (2026-09-28)
+- Fixed a persistence regression in canvas color serialization by versioning the project schema to v2 and storing the underlying Compose Color value instead of its human-readable display string.
+- Added saved-project source validation on startup. If Android can no longer read the persisted media URI, Carl now keeps the saved edit state and presents a Relink Media flow instead of opening a broken preview.
+- Added timeline/source reconciliation for relinking. Existing clip edits are preserved where valid; clips outside a shorter replacement source are removed and surviving ranges are clamped safely.
+- Added unit coverage for source-duration reconciliation and empty-timeline seeding.
+- These latest changes are implementation-complete but must not be marked CI-verified until GitHub Actions finishes.
