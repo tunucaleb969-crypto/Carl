@@ -48,4 +48,45 @@ class EditStateTest {
         assertSame(original, original.moveClip("a", -1))
         assertSame(original, original.moveClip("c", 1))
     }
+
+    @Test
+    fun splitAtCutsInsideClipAndPreservesSpeed() {
+        val original = EditState(
+            clips = listOf(
+                Clip(id = "a", sourceStartMs = 0L, sourceEndMs = 2_000L, speed = 2f)
+            )
+        )
+
+        val result = original.splitAt(500L)
+
+        assertEquals(listOf(0L, 500L), result.clips.map { it.sourceStartMs })
+        assertEquals(listOf(500L, 2_000L), result.clips.map { it.sourceEndMs })
+        assertEquals(listOf(2f, 2f), result.clips.map { it.speed })
+        assertNotEquals(result.clips[0].id, result.clips[1].id)
+        assertEquals(1_000L, result.totalDurationMs)
+    }
+
+    @Test
+    fun splitAtNearClipEdgeIsNoOp() {
+        val original = state()
+        assertSame(original, original.splitAt(100L))
+        assertSame(original, original.splitAt(900L))
+    }
+
+    @Test
+    fun speedChangesTimelineDurationWithoutChangingSourceRange() {
+        val original = state()
+        val changed = original.withSpeed("b", 2f)
+        val clip = changed.clips[1]
+
+        assertEquals(1_000L, clip.sourceDurationMs)
+        assertEquals(500L, clip.durationMs)
+        assertEquals(2f, clip.speed)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun nonPositiveSpeedIsRejected() {
+        Clip(sourceStartMs = 0L, sourceEndMs = 1_000L, speed = 0f)
+    }
+
 }
