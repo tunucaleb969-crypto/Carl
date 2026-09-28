@@ -247,6 +247,7 @@ fun TimelineControls(
                         .background(Color.Black.copy(alpha = 0.4f), RoundedCornerShape(1.5.dp))
                 )
             }
+            }
         }
 
         Spacer(modifier = Modifier.height(8.dp))
