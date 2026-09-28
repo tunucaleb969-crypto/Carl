@@ -27,26 +27,16 @@ import androidx.compose.ui.unit.dp
 private val ACCENT = Color(0xFF00E5A0)
 private val SURFACE = Color(0xFF121212)
 
-/**
- * The editor's top bar: back, project name, undo/redo, export.
- *
- * Icon-first controls (not text links) plus a distinct surface background separating this bar
- * from the black video canvas below it - this is the standard pattern professional mobile
- * editors use (Carl's own accent color, not a copied look) to read as an app chrome rather than
- * a plain settings list.
- *
- * Project naming/persistence doesn't exist yet, so [projectName] is a placeholder for now.
- * Export has no working implementation yet - rendered as a visibly disabled pill (communicates
- * "not yet available", never a button wired to do nothing).
- */
 @Composable
 fun EditorTopBar(
     projectName: String,
     canUndo: Boolean,
     canRedo: Boolean,
+    canExport: Boolean,
     onBack: () -> Unit,
     onUndo: () -> Unit,
     onRedo: () -> Unit,
+    onExport: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -77,6 +67,7 @@ fun EditorTopBar(
                 tint = if (canUndo) Color.White else Color.White.copy(alpha = 0.35f)
             )
         }
+
         IconButton(onClick = onRedo, enabled = canRedo) {
             Icon(
                 Icons.Filled.Redo,
@@ -85,25 +76,25 @@ fun EditorTopBar(
             )
         }
 
-        // Pill-styled Export - reads as the primary/terminal action, the way professional editors
-        // visually separate "finish and export" from ordinary transport controls. Intentionally
-        // disabled - no export pipeline exists yet.
         TextButton(
-            onClick = {},
-            enabled = false,
+            onClick = onExport,
+            enabled = canExport,
             modifier = Modifier
                 .padding(end = 4.dp)
-                .background(ACCENT.copy(alpha = 0.15f), RoundedCornerShape(50))
+                .background(
+                    if (canExport) ACCENT.copy(alpha = 0.15f) else ACCENT.copy(alpha = 0.06f),
+                    RoundedCornerShape(50)
+                )
         ) {
             Icon(
                 Icons.Filled.FileUpload,
                 contentDescription = null,
-                tint = Color.White.copy(alpha = 0.4f),
+                tint = if (canExport) Color.White else Color.White.copy(alpha = 0.35f),
                 modifier = Modifier.size(18.dp)
             )
             Text(
                 "Export",
-                color = Color.White.copy(alpha = 0.4f),
+                color = if (canExport) Color.White else Color.White.copy(alpha = 0.35f),
                 style = MaterialTheme.typography.labelLarge,
                 modifier = Modifier.padding(start = 4.dp)
             )
