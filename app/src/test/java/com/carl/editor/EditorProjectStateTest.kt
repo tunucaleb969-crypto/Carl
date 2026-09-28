@@ -2,6 +2,9 @@ package com.carl.editor
 
 import com.carl.editor.timeline.Clip
 import com.carl.editor.timeline.EditState
+import com.carl.editor.effects.ColorAdjustment
+import com.carl.editor.effects.GlobalCrop
+import com.carl.editor.effects.GlobalTransform
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Test
