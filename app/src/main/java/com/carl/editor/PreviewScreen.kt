@@ -141,7 +141,7 @@ fun PreviewScreen(
                 }
             }
             sourceDurationMs = duration
-            val reconciledState = history.present.reconcileSourceDuration(duration)
+            val reconciledState = history.present.withSourceDuration(duration)
             history = history.sync(reconciledState)
             if (selectedClipId == null) {
                 selectedClipId = reconciledState.clips.firstOrNull()?.id
