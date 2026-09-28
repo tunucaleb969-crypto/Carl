@@ -3,6 +3,7 @@ package com.carl.editor.timeline
 import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,6 +26,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.dp
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
+import kotlin.math.max
 
 private val ACCENT = Color(0xFF00E5A0)
 private val SURFACE = Color(0xFF121212)
@@ -57,20 +59,44 @@ fun TimelineControls(
     modifier: Modifier = Modifier
 ) {
     var trackWidthPx by remember { mutableStateOf(1f) }
+    var zoom by remember { mutableFloatStateOf(1f) }
+    val scrollState = rememberScrollState()
+
+    fun contentWidthPx(): Float = max(trackWidthPx, trackWidthPx * zoom)
 
     fun pxToMs(px: Float): Long {
-        if (durationMs == 0L || trackWidthPx == 0f) return 0L
-        return ((px / trackWidthPx) * durationMs).toLong().coerceIn(0L, durationMs)
+        val width = contentWidthPx()
+        if (durationMs == 0L || width == 0f) return 0L
+        return (((px + scrollState.value) / width) * durationMs)
+            .toLong()
+            .coerceIn(0L, durationMs)
     }
 
     fun pxDeltaToMsDelta(px: Float): Long {
-        if (durationMs == 0L || trackWidthPx == 0f) return 0L
-        return ((px / trackWidthPx) * durationMs).toLong()
+        val width = contentWidthPx()
+        if (durationMs == 0L || width == 0f) return 0L
+        return ((px / width) * durationMs).toLong()
     }
 
     fun msToPx(ms: Long): Float {
         if (durationMs == 0L) return 0f
-        return (ms.toFloat() / durationMs) * trackWidthPx
+        return (ms.toFloat() / durationMs) * contentWidthPx()
+    }
+
+    LaunchedEffect(positionMs, zoom, durationMs, trackWidthPx) {
+        if (trackWidthPx <= 1f || durationMs <= 0L) return@LaunchedEffect
+        val playhead = msToPx(positionMs)
+        val viewportStart = scrollState.value.toFloat()
+        val viewportEnd = viewportStart + trackWidthPx
+        val margin = trackWidthPx * 0.18f
+        when {
+            playhead < viewportStart + margin ->
+                scrollState.animateScrollTo((playhead - margin).coerceAtLeast(0f).toInt())
+            playhead > viewportEnd - margin ->
+                scrollState.animateScrollTo(
+                    (playhead - trackWidthPx + margin).coerceAtLeast(0f).toInt()
+                )
+        }
     }
 
     Column(modifier = modifier.fillMaxWidth().background(SURFACE).padding(16.dp)) {
@@ -88,15 +114,22 @@ fun TimelineControls(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp)
-                .pointerInput(durationMs) {
-                    detectDragGestures { change, _ ->
-                        onSeek(pxToMs(change.position.x))
-                    }
-                }
+                .clip(RoundedCornerShape(4.dp))
                 .onGloballyPositioned { coords ->
                     trackWidthPx = coords.size.width.toFloat()
                 }
+                .horizontalScroll(scrollState, enabled = zoom > 1f)
         ) {
+            Box(
+                modifier = Modifier
+                    .width(withDp(contentWidthPx()))
+                    .height(56.dp)
+                    .pointerInput(durationMs, zoom, trackWidthPx, scrollState.value) {
+                        detectDragGestures { change, _ ->
+                            onSeek(pxToMs(change.position.x))
+                        }
+                    }
+            ) {
             // Clip filmstrip - each clip's width is proportional to its share of the timeline
             // (via Row weight, matching how durationMs already sums proportionally). Replaces the
             // old flat colored bar with real preview frames, so this reads as an actual video
@@ -214,6 +247,25 @@ fun TimelineControls(
                 )
             }
         }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Zoom", color = Color.White, style = MaterialTheme.typography.labelSmall)
+            Slider(
+                value = zoom,
+                onValueChange = { zoom = it },
+                valueRange = 1f..4f,
+                steps = 5,
+                modifier = Modifier.weight(1f)
+            )
+            Text(zoom.toInt().toString() + "x", color = Color.White, style = MaterialTheme.typography.labelSmall)
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
 
         Spacer(modifier = Modifier.height(12.dp))
 
