@@ -7,6 +7,7 @@ package com.carl.editor
  */
 enum class ToolTab(val label: String) {
     TRANSFORM("Transform"),
+    CROP("Crop"),
     CANVAS("Canvas"),
     COLOR("Color")
 }
