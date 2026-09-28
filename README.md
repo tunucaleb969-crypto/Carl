@@ -1,9 +1,14 @@
 # Carl
 
-A professional mobile video-editing app for Android — built to compete with CapCut on editing power, timeline workflow, and UX, with its own original design identity.
+A professional Android video editor focused on a strong mobile editing workflow, adaptive UI, and a scalable Media3-based media engine.
 
 ## Status
-🚧 Early development — foundation phase complete, no editing features yet.
+🚧 Active foundation development. Timeline editing, preview effects, crop, transform, color adjustment, speed controls, and Transformer export are implemented and continuously verified by CI.
+
+## Engineering direction
+Carl is being developed feature-batch by feature-batch. The architecture is being hardened for per-clip effects, multi-track editing, audio, captions, transitions, keyframes, adaptive phone/tablet/foldable layouts, device capability-aware rendering, reliable export, project persistence, and recovery.
+
+The implementation is capability-based rather than tied to specific phone models. Android's current adaptive guidance recommends responsive layouts based on available window size and runtime capabilities rather than device allowlists. citeturn0search1turn0search4
 
 ## Tech stack
 - Kotlin + Jetpack Compose
