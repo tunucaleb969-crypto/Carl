@@ -41,15 +41,6 @@ private fun iconFor(tab: ToolTab): ImageVector = when (tab) {
     ToolTab.COLOR -> Icons.Filled.Tune
 }
 
-/**
- * Contextual tool dock: icon+label tabs (Transform/Canvas/Color), with only the selected tab's
- * panel visible below it. Icon-over-label tabs with an accent-tinted rounded highlight on the
- * active tab is the standard bottom-dock pattern professional mobile editors use - applied here
- * with Carl's own accent color, not a copied look.
- *
- * Reuses the existing GlobalTransformControls / CanvasControls / ColorAdjustmentControls
- * composables unchanged - only how/when they're shown has changed, not their internals.
- */
 @Composable
 fun ToolDock(
     selectedTool: ToolTab?,
@@ -60,6 +51,10 @@ fun ToolDock(
     onRotate: () -> Unit,
     onToggleFlipHorizontal: () -> Unit,
     onToggleFlipVertical: () -> Unit,
+    onZoomOut: () -> Unit,
+    onZoomIn: () -> Unit,
+    onPan: (Float, Float) -> Unit,
+    onResetFraming: () -> Unit,
     canvasSettings: CanvasSettings,
     onSelectAspectRatio: (AspectRatioPreset) -> Unit,
     onSelectBackgroundColor: (Color) -> Unit,
@@ -106,7 +101,11 @@ fun ToolDock(
                 transform = globalTransform,
                 onRotate = onRotate,
                 onToggleFlipHorizontal = onToggleFlipHorizontal,
-                onToggleFlipVertical = onToggleFlipVertical
+                onToggleFlipVertical = onToggleFlipVertical,
+                onZoomOut = onZoomOut,
+                onZoomIn = onZoomIn,
+                onPan = onPan,
+                onResetFraming = onResetFraming
             )
             ToolTab.CROP -> GlobalCropControls(
                 crop = globalCrop,
