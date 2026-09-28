@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AspectRatio
-import androidx.compose.material.icons.filled.RotateRight
+import androidx.compose.material.icons.automirrored.filled.RotateRight
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -35,7 +35,7 @@ private val ACCENT = Color(0xFF00E5A0)
 private val SURFACE = Color(0xFF121212)
 
 private fun iconFor(tab: ToolTab): ImageVector = when (tab) {
-    ToolTab.TRANSFORM -> Icons.Filled.RotateRight
+    ToolTab.TRANSFORM -> Icons.AutoMirrored.Filled.RotateRight
     ToolTab.CROP -> Icons.Filled.AspectRatio
     ToolTab.CANVAS -> Icons.Filled.AspectRatio
     ToolTab.COLOR -> Icons.Filled.Tune
