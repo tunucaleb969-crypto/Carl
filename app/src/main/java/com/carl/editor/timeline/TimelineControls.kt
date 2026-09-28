@@ -179,7 +179,7 @@ fun TimelineControls(
                 val boundaryPx = msToPx(elapsed)
                 Box(
                     modifier = Modifier
-                        .offset(x = withDp(boundaryPx - 1f))
+                        .offset(x = pxToDp(boundaryPx - 1f))
                         .width(2.dp)
                         .height(40.dp)
                         .align(Alignment.CenterStart)
@@ -190,7 +190,7 @@ fun TimelineControls(
             // playhead
             Box(
                 modifier = Modifier
-                    .offset(x = withDp(msToPx(positionMs) - 2f))
+                    .offset(x = pxToDp(msToPx(positionMs) - 2f))
                     .width(4.dp)
                     .height(48.dp)
                     .align(Alignment.CenterStart)
@@ -201,7 +201,7 @@ fun TimelineControls(
             // grip mark so it reads as a draggable control, not just a colored block
             Box(
                 modifier = Modifier
-                    .offset(x = withDp(-8f))
+                    .offset(x = pxToDp(-8f))
                     .width(16.dp)
                     .height(48.dp)
                     .align(Alignment.CenterStart)
@@ -228,7 +228,7 @@ fun TimelineControls(
             // end trim handle (always the right edge of the timeline) - same grip treatment
             Box(
                 modifier = Modifier
-                    .offset(x = withDp(msToPx(durationMs) - 8f))
+                    .offset(x = pxToDp(msToPx(durationMs) - 8f))
                     .width(16.dp)
                     .height(48.dp)
                     .align(Alignment.CenterStart)
@@ -372,8 +372,3 @@ private fun formatSpeedLabel(speed: Float): String {
     return "${trimmed}x"
 }
 
-@Composable
-private fun withDp(px: Float): androidx.compose.ui.unit.Dp {
-    val density = androidx.compose.ui.platform.LocalDensity.current
-    return with(density) { px.toDp() }
-}
