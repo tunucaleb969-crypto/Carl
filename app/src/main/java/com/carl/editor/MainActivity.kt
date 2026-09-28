@@ -99,9 +99,14 @@ class MainActivity : ComponentActivity() {
                         uri = videoUri!!,
                         initialProjectState = savedDraft?.state ?: EditorProjectState(),
                         initialProjectName = savedDraft?.projectName ?: "Untitled Project",
-                        onProjectChanged = { state ->
+                        onProjectChanged = { state, name ->
+                            savedDraft = savedDraft?.copy(
+                                projectName = name,
+                                sourceUri = videoUri!!.toString(),
+                                state = state
+                            )
                             projectRepository.save(
-                                savedDraft?.projectName ?: "Untitled Project",
+                                name,
                                 videoUri!!.toString(),
                                 state
                             )
