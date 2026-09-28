@@ -109,7 +109,7 @@ fun ToolDock(
             )
             ToolTab.CROP -> GlobalCropControls(
                 crop = globalCrop,
-                onSelectInset = { inset -> onSelectCropInsets(inset, inset, inset, inset) }
+                onSelectCropInsets = onSelectCropInsets
             )
             ToolTab.CANVAS -> CanvasControls(
                 settings = canvasSettings,
