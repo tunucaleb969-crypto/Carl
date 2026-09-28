@@ -71,6 +71,7 @@ fun PreviewScreen(uri: Uri, onBack: () -> Unit) {
     var isPlaying by remember { mutableStateOf(true) }
     var positionMs by remember { mutableLongStateOf(0L) }
     var history by remember { mutableStateOf(EditHistory()) }
+    var selectedClipId by remember { mutableStateOf<String?>(null) }
     var sourceDurationMs by remember { mutableLongStateOf(0L) }
     // Non-null only while a trim handle is actively being dragged; holds the live preview
     // so we don't rebuild the ExoPlayer playlist on every drag frame.
@@ -120,7 +121,17 @@ fun PreviewScreen(uri: Uri, onBack: () -> Unit) {
                 }
             }
             sourceDurationMs = duration
-            history = history.sync(history.present.withSourceDuration(duration))
+            val seededState = history.present.withSourceDuration(duration)
+            history = history.sync(seededState)
+            if (selectedClipId == null) {
+                selectedClipId = seededState.clips.firstOrNull()?.id
+            }
+        }
+    }
+
+    LaunchedEffect(committedClips) {
+        if (selectedClipId != null && committedClips.none { it.id == selectedClipId }) {
+            selectedClipId = committedClips.firstOrNull()?.id
         }
     }
 
@@ -300,8 +311,45 @@ fun PreviewScreen(uri: Uri, onBack: () -> Unit) {
                 durationMs = displayDurationMs,
                 isPlaying = isPlaying,
                 clips = displayClips,
+                selectedClipId = selectedClipId,
                 currentClipSpeed = currentClipSpeed,
                 onSeek = { seekTimelineMs(it) },
+                onSelectClip = { selectedClipId = it },
+                onDeleteClip = {
+                    val id = selectedClipId
+                    if (id != null) {
+                        val currentIndex = history.present.indexOfClip(id)
+                        val newState = history.present.deleteClip(id)
+                        history = history.push(newState)
+                        selectedClipId = newState.clips
+                            .getOrNull(currentIndex.coerceAtMost(newState.clips.lastIndex))
+                            ?.id
+                            ?: newState.clips.lastOrNull()?.id
+                    }
+                },
+                onDuplicateClip = {
+                    val id = selectedClipId
+                    if (id != null) {
+                        val originalIndex = history.present.indexOfClip(id)
+                        val newState = history.present.duplicateClip(id)
+                        history = history.push(newState)
+                        selectedClipId = newState.clips.getOrNull(originalIndex + 1)?.id ?: id
+                    }
+                },
+                onMoveClipUp = {
+                    val id = selectedClipId
+                    if (id != null) {
+                        history = history.push(history.present.moveClip(id, -1))
+                        selectedClipId = id
+                    }
+                },
+                onMoveClipDown = {
+                    val id = selectedClipId
+                    if (id != null) {
+                        history = history.push(history.present.moveClip(id, 1))
+                        selectedClipId = id
+                    }
+                },
                 onPlayPause = {
                     if (exoPlayer.isPlaying) exoPlayer.pause() else exoPlayer.play()
                 },
