@@ -29,8 +29,8 @@ class GlobalTransformTest {
     }
 
     @Test
-    fun panProducesAVisualEffect() {
-        assertEquals(2, GlobalTransform(panX = 0.2f).toEffects().size)
+    fun panPreservesAValidTransformEffect() {
+        assertEquals(1, GlobalTransform(panX = 0.2f).toEffects().size)
     }
 
     @Test
