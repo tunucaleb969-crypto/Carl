@@ -113,7 +113,14 @@ Biggest structural gap: no CompositionPlayer yet (per-clip preview effects); exp
 - NEW: export uses Media3 Transformer (media3-transformer:1.4.1), NOT FFmpeg; per-clip speed/effects deliberately NOT baked into export yet (would be incorrect without SpeedChangeEffect-based timestamp remapping)
 - NEW: when pinned to an older Material3 version, prefer older/more universally-supported API overloads (e.g. Float-param LinearProgressIndicator) over newer ones whose availability at that version isn't confirmed
 
-## Current next step
-Two independent things pending, in priority order:
-1. (Higher priority, blocking) Get a CI build + device check covering the 3 stacked PreviewScreen.kt changes: (a) does it compile with the new XML layout resource + LayoutInflater usage, (b) does the video preview actually show video now (not black) when rotate/flip/color effects are active, (c) does the error banner behave correctly (hidden during normal playback, visible only on a real error).
-2. (Independent, not blocking on #1) Once that's confirmed, wire the Export button: enable it in EditorTopBar.kt, add export-triggering state + ExportEngine call + ExportProgressDialog to PreviewScreen.kt, and get a build to confirm the new media3-transformer dependency resolves correctly.
+## Current continuation status (2026-09-28)
+- Timeline editing foundation is implemented: clip selection, delete, duplicate, move earlier/later, and selection-aware undo/redo are in the shared EditState/EditHistory layer.
+- Timeline Phase 4b work has been added: zoom from 1x to 4x, horizontal scrolling, playhead visibility auto-scroll, zoom-aware seeking, and selection following the playhead.
+- A CI failure occurred during Phase 4b. The timeline code was corrected in follow-up commits, including the missing scroll-state import and a safer density conversion path. CI verification is currently running on the latest pushed changes; do not declare Phase 4b verified until that build completes successfully.
+- Important: automated CI build verification is available; a real Android-device visual test is still required to confirm actual zoom/scroll/playhead behavior and the earlier TextureView preview fix.
+
+## Next step after CI is green
+1. Confirm the latest GitHub Actions build succeeds. If it fails, stop feature work and fix the exact compiler/build issue first.
+2. Perform/record the available device verification for the timeline zoom/scroll/playhead behavior and the previously unverified TextureView/error-banner changes.
+3. Only after the above is verified, continue to Export button wiring and Transformer export verification.
+4. Keep this file updated after each meaningful milestone so a new session can resume without reconstructing project history.
