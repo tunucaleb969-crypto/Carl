@@ -50,8 +50,8 @@ sealed class ExportProgress {
  * SCOPE FOR THIS FIRST VERSION (deliberate, not an oversight):
  * - Concatenates [Clip]s in order, honoring each clip's trimmed in/out points via the same
  *   MediaItem.ClippingConfiguration approach already used for preview.
- * - Honors each clip's playback speed using Media3's EditedMediaItem.Builder#setSpeed(SpeedProvider),
- *   so the exported media duration and audio/video timing follow the same speed value as preview.
+ * - Honors each clip's playback speed using Media3 1.4.1 audio/video speed effects, so the
+ *   exported media duration and audio/video timing follow the same speed value as preview.
  * - Does NOT bake in rotate/flip or color adjustments yet. Those remain preview-only until export
  *   receives the same effect state from the editor.
  * - Output format: Transformer's own defaults (no explicit resolution/bitrate/codec override
