@@ -31,7 +31,7 @@ object ProjectStateSerializer {
 
     fun fromJson(json: String): SavedProject? = runCatching {
         val root = JSONObject(json)
-        require(root.getInt("schemaVersion") == SCHEMA_VERSION) { "Unsupported project schema" }
+        require(root.getInt("schemaVersion") in 2..SCHEMA_VERSION) { "Unsupported project schema" }
         SavedProject(
             projectName = root.optString("projectName", "Untitled Project"),
             sourceUri = root.getString("sourceUri"),
