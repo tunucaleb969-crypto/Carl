@@ -86,28 +86,7 @@ class ExportEngine(private val context: Context) {
             return@callbackFlow
         }
 
-        val editedItems = clips.map { clip ->
-            val mediaItem = MediaItem.Builder()
-                .setUri(sourceUri)
-                .setClippingConfiguration(
-                    MediaItem.ClippingConfiguration.Builder()
-                        .setStartPositionMs(clip.sourceStartMs)
-                        .setEndPositionMs(clip.sourceEndMs)
-                        .build()
-                )
-                .build()
-            val speedProvider = ConstantSpeedProvider(clip.speed)
-            val speedEffect = SpeedChangeEffect(speedProvider)
-            val speedAudioProcessor = androidx.media3.common.audio.SpeedChangingAudioProcessor(speedProvider)
-            EditedMediaItem.Builder(mediaItem)
-                .setEffects(
-                    Effects(
-                        listOf<AudioProcessor>(speedAudioProcessor),
-                        videoEffects + speedEffect
-                    )
-                )
-                .build()
-        }
+        val editedItems = buildEditedItems(sourceUri, clips, videoEffects)
 
         val composition = Composition.Builder(EditedMediaItemSequence(editedItems)).build()
         val isTerminal = AtomicBoolean(false)
