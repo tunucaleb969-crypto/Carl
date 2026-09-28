@@ -28,6 +28,8 @@ import com.carl.editor.effects.ColorAdjustment
 import com.carl.editor.effects.ColorAdjustmentControls
 import com.carl.editor.effects.GlobalTransform
 import com.carl.editor.effects.GlobalTransformControls
+import com.carl.editor.effects.GlobalCrop
+import com.carl.editor.effects.GlobalCropControls
 
 private val ACCENT = Color(0xFF00E5A0)
 private val SURFACE = Color(0xFF121212)
@@ -52,6 +54,8 @@ fun ToolDock(
     selectedTool: ToolTab?,
     onSelectTool: (ToolTab?) -> Unit,
     globalTransform: GlobalTransform,
+    globalCrop: GlobalCrop,
+    onSelectCropInset: (Float) -> Unit,
     onRotate: () -> Unit,
     onToggleFlipHorizontal: () -> Unit,
     onToggleFlipVertical: () -> Unit,
@@ -102,6 +106,10 @@ fun ToolDock(
                 onRotate = onRotate,
                 onToggleFlipHorizontal = onToggleFlipHorizontal,
                 onToggleFlipVertical = onToggleFlipVertical
+            )
+            ToolTab.CROP -> GlobalCropControls(
+                crop = globalCrop,
+                onSelectInset = onSelectCropInset
             )
             ToolTab.CANVAS -> CanvasControls(
                 settings = canvasSettings,
