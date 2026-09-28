@@ -44,11 +44,10 @@ sealed class ExportProgress {
  * SCOPE FOR THIS FIRST VERSION (deliberate, not an oversight):
  * - Concatenates [Clip]s in order, honoring each clip's trimmed in/out points via the same
  *   MediaItem.ClippingConfiguration approach already used for preview.
- * - Does NOT bake in per-clip speed, rotate/flip, or color adjustments yet. Speed specifically
- *   needs a SpeedChangeEffect with real timestamp remapping for a correct exported file -
- *   reusing ExoPlayer.playbackParameters (preview-only, live playback rate) would silently
- *   produce a normal-speed file while claiming to honor the speed setting. Rather than ship
- *   that incorrect behavior, it's deferred to a follow-up step.
+ * - Honors each clip's playback speed using Media3's EditedMediaItem.Builder#setSpeed(SpeedProvider),
+ *   so the exported media duration and audio/video timing follow the same speed value as preview.
+ * - Does NOT bake in rotate/flip or color adjustments yet. Those remain preview-only until export
+ *   receives the same effect state from the editor.
  * - Output format: Transformer's own defaults (no explicit resolution/bitrate/codec override
  *   yet) - a later step should add configurable export settings.
  */
@@ -91,7 +90,9 @@ class ExportEngine(private val context: Context) {
                         .build()
                 )
                 .build()
-            EditedMediaItem.Builder(mediaItem).build()
+            EditedMediaItem.Builder(mediaItem)
+                .setSpeed(ConstantSpeedProvider(clip.speed))
+                .build()
         }
 
         val composition = Composition.Builder(EditedMediaItemSequence(editedItems)).build()
@@ -166,6 +167,12 @@ class ExportEngine(private val context: Context) {
                 }
             }
         }
+    }
+
+    private class ConstantSpeedProvider(private val speed: Float) : SpeedProvider {
+        override fun getNextSpeedChangeTimeUs(timeUs: Long): Long = C.TIME_UNSET
+
+        override fun getSpeed(timeUs: Long): Float = speed
     }
 
     private fun validateSource(sourceUri: Uri): String? = when (sourceUri.scheme) {
