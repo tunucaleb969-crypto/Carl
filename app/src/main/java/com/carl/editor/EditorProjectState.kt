@@ -45,6 +45,15 @@ data class EditorProjectState(
     fun withSpeed(clipId: String, speed: Float): EditorProjectState =
         copy(timeline = timeline.withSpeed(clipId, speed))
 
+    fun updateClip(clipId: String, update: (Clip) -> Clip): EditorProjectState =
+        copy(
+            timeline = timeline.copy(
+                clips = timeline.clips.map { clip ->
+                    if (clip.id == clipId) update(clip) else clip
+                }
+            )
+        )
+
     fun withClips(clips: List<Clip>): EditorProjectState =
         copy(timeline = timeline.copy(clips = clips))
 }
