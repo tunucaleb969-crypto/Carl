@@ -19,7 +19,7 @@ import org.json.JSONObject
  * This keeps autosave small while allowing the original media to remain in MediaStore/storage.
  */
 object ProjectStateSerializer {
-    private const val SCHEMA_VERSION = 2
+    private const val SCHEMA_VERSION = 3
 
     fun toJson(projectName: String, sourceUri: String, state: EditorProjectState): String =
         JSONObject()
@@ -139,7 +139,7 @@ object ProjectStateSerializer {
     private fun canvasToJson(value: CanvasSettings): JSONObject =
         JSONObject()
             .put("aspectRatio", value.aspectRatio.name)
-            .put("backgroundColor", value.backgroundColor.value.toString())
+            .put("backgroundColor", java.lang.Long.toUnsignedString(value.backgroundColor.value.toLong()))
 
     private fun canvasFromJson(json: JSONObject): CanvasSettings =
         CanvasSettings(
@@ -147,7 +147,7 @@ object ProjectStateSerializer {
                 AspectRatioPreset.valueOf(json.getString("aspectRatio"))
             }.getOrDefault(AspectRatioPreset.ORIGINAL),
             backgroundColor = runCatching {
-                Color(json.getString("backgroundColor").toULong())
+                Color(java.lang.Long.parseUnsignedLong(json.getString("backgroundColor")).toULong())
             }.getOrDefault(Color.Black)
         )
 }
