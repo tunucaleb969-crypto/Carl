@@ -40,6 +40,11 @@ Decision: keep renderer abstractions separate from the editing model. Do not bli
 Current Transformer documentation supports trimming, video effects, image inputs, audio processing, and Composition export. Composition documentation still lists limitations such as crossfading video/audio tracks.
 Decision: every visible editing feature needs a real export path or must remain clearly disabled/deferred. Preview-only playback parameters must never be presented as export support.
 
+## Photo Picker URI persistence
+Android's Photo Picker can provide a URI grant for the selected media. When a provider supports persistable permissions, Carl can request a persisted read grant with ContentResolver.takePersistableUriPermission(). Providers may reject persistence, so this must be best-effort and the project must retain enough source identity to relink later.
+
+Decision: request a persistable read grant at import time, but do not treat it as proof that the media will remain available forever. The future project format must store source URI plus stable source metadata and provide a relink path.
+
 ## Project persistence
 Android documentation positions DataStore for small settings/typed objects and Room for larger or relational datasets with partial updates and referential integrity. Carl's future project model will contain clips, tracks, effects, assets, keyframes, text and recovery metadata.
 Decision: do not use DataStore as the primary editor-project database. Move toward a versioned project format plus a persistent asset/project index, with atomic autosave and migrations.
