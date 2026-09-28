@@ -230,7 +230,7 @@ fun PreviewScreen(uri: Uri, onBack: () -> Unit) {
         val draft = draftClips
         draftClips = null
         if (draft != null && draft != history.present.clips) {
-            history = history.push(history.present.copy(clips = draft))
+            history = history.push(history.present.withClips(draft))
         }
     }
 
