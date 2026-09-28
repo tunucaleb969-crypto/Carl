@@ -160,7 +160,7 @@ object ProjectStateSerializer {
                         ?: java.lang.Long.parseUnsignedLong(raw).toInt()
                     else -> error("Unsupported background color representation")
                 }
-                Color(argb.toLong())
+                Color(argb)
             }.getOrDefault(Color.Black)
         )
 }
