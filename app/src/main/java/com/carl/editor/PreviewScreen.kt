@@ -14,9 +14,12 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -69,7 +72,7 @@ fun PreviewScreen(
     uri: Uri,
     initialProjectState: EditorProjectState = EditorProjectState(),
     initialProjectName: String = "Untitled Project",
-    onProjectChanged: (EditorProjectState) -> Unit = {},
+    onProjectChanged: (EditorProjectState, String) -> Unit = { _, _ -> },
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
@@ -78,6 +81,9 @@ fun PreviewScreen(
     }
 
     var isPlaying by remember { mutableStateOf(true) }
+    var projectName by remember { mutableStateOf(initialProjectName) }
+    var showRenameDialog by remember { mutableStateOf(false) }
+    var renameDraft by remember { mutableStateOf(initialProjectName) }
     var positionMs by remember { mutableLongStateOf(0L) }
     var history by remember { mutableStateOf(EditorProjectHistory(present = initialProjectState)) }
     var selectedClipId by remember { mutableStateOf<String?>(null) }
@@ -105,7 +111,7 @@ fun PreviewScreen(
     // waits briefly for the current burst to settle instead of writing on every slider frame.
     LaunchedEffect(history.present) {
         delay(350)
-        onProjectChanged(history.present)
+        onProjectChanged(history.present, projectName)
     }
 
     val committedClips = history.present.clips
@@ -264,13 +270,17 @@ fun PreviewScreen(
         Column(modifier = Modifier.fillMaxSize()) {
             // Project identity and autosave are provided by the persistence layer.
             EditorTopBar(
-                projectName = initialProjectName,
+                projectName = projectName,
                 canUndo = history.canUndo,
                 canRedo = history.canRedo,
                 canExport = committedClips.isNotEmpty() && exportJob?.isActive != true,
                 onBack = onBack,
                 onUndo = { history = history.undo() },
                 onRedo = { history = history.redo() },
+                onRename = {
+                    renameDraft = projectName
+                    showRenameDialog = true
+                },
                 onExport = {
                     exportJob?.cancel()
                     exportProgress = ExportProgress.InProgress(0)
@@ -454,6 +464,38 @@ fun PreviewScreen(
                 onContrastChange = { value -> history = history.push(history.present.copy(colorAdjustment = colorAdjustment.copy(contrast = value))) },
                 onSaturationChange = { value -> history = history.push(history.present.copy(colorAdjustment = colorAdjustment.copy(saturation = value))) },
                 onResetColor = { history = history.push(history.present.copy(colorAdjustment = ColorAdjustment())) }
+            )
+        }
+
+        if (showRenameDialog) {
+            AlertDialog(
+                onDismissRequest = { showRenameDialog = false },
+                title = { Text("Rename project") },
+                text = {
+                    OutlinedTextField(
+                        value = renameDraft,
+                        onValueChange = { renameDraft = it.take(80) },
+                        singleLine = true,
+                        label = { Text("Project name") }
+                    )
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            val normalized = renameDraft.trim().ifBlank { "Untitled Project" }
+                            projectName = normalized
+                            showRenameDialog = false
+                            onProjectChanged(history.present, normalized)
+                        }
+                    ) {
+                        Text("Save")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showRenameDialog = false }) {
+                        Text("Cancel")
+                    }
+                }
             )
         }
 
