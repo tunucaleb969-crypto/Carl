@@ -19,16 +19,15 @@ import org.json.JSONObject
  * This keeps autosave small while allowing the original media to remain in MediaStore/storage.
  */
 object ProjectStateSerializer {
-    private const val SCHEMA_VERSION = 1
+    private const val SCHEMA_VERSION = 2
 
-    fun toJson(projectName: String, sourceUri: String, state: EditorProjectState): String {
-        val root = JSONObject()
+    fun toJson(projectName: String, sourceUri: String, state: EditorProjectState): String =
+        JSONObject()
             .put("schemaVersion", SCHEMA_VERSION)
             .put("projectName", projectName)
             .put("sourceUri", sourceUri)
             .put("state", stateToJson(state))
-        return root.toString()
-    }
+            .toString()
 
     fun fromJson(json: String): SavedProject? = runCatching {
         val root = JSONObject(json)
