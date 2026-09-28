@@ -1,42 +1,72 @@
 package com.carl.editor.effects
 
+import android.graphics.Matrix
 import androidx.annotation.OptIn
 import androidx.media3.common.Effect
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.effect.MatrixTransformation
 import androidx.media3.effect.ScaleAndRotateTransformation
 
 /**
- * A whole-video visual transform, applied identically to every clip.
+ * Whole-video visual transform.
  *
- * This is intentionally NOT per-clip: true per-clip visual effects require Media3's
- * CompositionPlayer, which is still an experimental API not present at our pinned
- * Media3 version (1.4.1). See PROJECT_STATE.md for the full tradeoff. This is a
- * deliberate, documented scope choice, not an oversight.
+ * Rotation/flip are kept alongside zoom and pan so preview and export use the same effect model.
+ * The scope is deliberately global until the project adopts a Media3 composition architecture
+ * that can safely apply visual effects to individual timeline items during preview.
  */
 data class GlobalTransform(
     val rotationDegrees: Float = 0f,
     val flipHorizontal: Boolean = false,
-    val flipVertical: Boolean = false
+    val flipVertical: Boolean = false,
+    val zoom: Float = 1f,
+    val panX: Float = 0f,
+    val panY: Float = 0f
 ) {
-    fun rotatedClockwise(): GlobalTransform {
-        return copy(rotationDegrees = (rotationDegrees + 90f) % 360f)
-    }
+    val normalizedZoom: Float get() = zoom.coerceIn(1f, 3f)
+    val normalizedPanX: Float get() = panX.coerceIn(-1f, 1f)
+    val normalizedPanY: Float get() = panY.coerceIn(-1f, 1f)
 
-    /**
-     * Builds the Media3 Effect list for this transform, or an empty list if it's a no-op.
-     * ScaleAndRotateTransformation is @UnstableApi - Media3's effects framework is marked
-     * unstable project-wide (subject to change, not yet API-frozen), which Kotlin enforces
-     * as a hard compile error unless every usage site opts in explicitly.
-     */
+    fun rotatedClockwise(): GlobalTransform =
+        copy(rotationDegrees = (rotationDegrees + 90f) % 360f)
+
+    fun zoomedBy(delta: Float): GlobalTransform =
+        copy(zoom = (normalizedZoom + delta).coerceIn(1f, 3f))
+
+    fun pannedBy(deltaX: Float, deltaY: Float): GlobalTransform =
+        copy(
+            panX = (normalizedPanX + deltaX).coerceIn(-1f, 1f),
+            panY = (normalizedPanY + deltaY).coerceIn(-1f, 1f)
+        )
+
+    fun resetFraming(): GlobalTransform = copy(zoom = 1f, panX = 0f, panY = 0f)
+
     @OptIn(UnstableApi::class)
     fun toEffects(): List<Effect> {
-        if (rotationDegrees == 0f && !flipHorizontal && !flipVertical) return emptyList()
-        val scaleX = if (flipHorizontal) -1f else 1f
-        val scaleY = if (flipVertical) -1f else 1f
-        val transformation = ScaleAndRotateTransformation.Builder()
+        val scaleX = (if (flipHorizontal) -1f else 1f) * normalizedZoom
+        val scaleY = (if (flipVertical) -1f else 1f) * normalizedZoom
+
+        if (
+            rotationDegrees == 0f &&
+            scaleX == 1f &&
+            scaleY == 1f &&
+            normalizedPanX == 0f &&
+            normalizedPanY == 0f
+        ) return emptyList()
+
+        val scaleAndRotate = ScaleAndRotateTransformation.Builder()
             .setScale(scaleX, scaleY)
             .setRotationDegrees(rotationDegrees)
             .build()
-        return listOf(transformation)
+
+        if (normalizedPanX == 0f && normalizedPanY == 0f) {
+            return listOf(scaleAndRotate)
+        }
+
+        val pan = MatrixTransformation { _ ->
+            Matrix().apply {
+                postTranslate(normalizedPanX, -normalizedPanY)
+            }
+        }
+        return listOf(scaleAndRotate, pan)
     }
 }
