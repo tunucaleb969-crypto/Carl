@@ -1,6 +1,7 @@
 package com.carl.editor.persistence
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import com.carl.editor.EditorProjectState
 import com.carl.editor.canvas.AspectRatioPreset
 import com.carl.editor.canvas.CanvasSettings
@@ -139,7 +140,10 @@ object ProjectStateSerializer {
     private fun canvasToJson(value: CanvasSettings): JSONObject =
         JSONObject()
             .put("aspectRatio", value.aspectRatio.name)
-            .put("backgroundColor", java.lang.Long.toUnsignedString(value.backgroundColor.value.toLong()))
+            // Canvas backgrounds are rendered as regular UI colors. Persist their stable sRGB
+            // ARGB representation rather than Compose's internal packed ULong, whose encoding is
+            // an implementation detail and can vary with color-space representation.
+            .put("backgroundColor", value.backgroundColor.toArgb())
 
     private fun canvasFromJson(json: JSONObject): CanvasSettings =
         CanvasSettings(
@@ -147,7 +151,16 @@ object ProjectStateSerializer {
                 AspectRatioPreset.valueOf(json.getString("aspectRatio"))
             }.getOrDefault(AspectRatioPreset.ORIGINAL),
             backgroundColor = runCatching {
-                Color(java.lang.Long.parseUnsignedLong(json.getString("backgroundColor")).toULong())
+                // Accept both the current numeric ARGB representation and legacy decimal-string
+                // representations written by earlier schema-3 builds.
+                val raw = json.get("backgroundColor")
+                val argb = when (raw) {
+                    is Number -> raw.toInt()
+                    is String -> raw.toLongOrNull()?.toInt()
+                        ?: java.lang.Long.parseUnsignedLong(raw).toInt()
+                    else -> error("Unsupported background color representation")
+                }
+                Color(argb.toLong())
             }.getOrDefault(Color.Black)
         )
 }
