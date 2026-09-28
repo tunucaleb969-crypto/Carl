@@ -59,8 +59,8 @@ class EditStateTest {
 
         val result = original.splitAt(500L)
 
-        assertEquals(listOf(0L, 500L), result.clips.map { it.sourceStartMs })
-        assertEquals(listOf(500L, 2_000L), result.clips.map { it.sourceEndMs })
+        assertEquals(listOf(0L, 1_000L), result.clips.map { it.sourceStartMs })
+        assertEquals(listOf(1_000L, 2_000L), result.clips.map { it.sourceEndMs })
         assertEquals(listOf(2f, 2f), result.clips.map { it.speed })
         assertNotEquals(result.clips[0].id, result.clips[1].id)
         assertEquals(1_000L, result.totalDurationMs)
