@@ -293,7 +293,8 @@ fun PreviewScreen(
                         exportEngine.export(
                             uri,
                             committedClips,
-                            globalCrop.toEffects() + globalTransform.toEffects() + colorAdjustment.toEffects()
+                            globalCrop.toEffects() + globalTransform.toEffects() + colorAdjustment.toEffects(),
+                            canvasSettings = canvasSettings
                         ).collect { progress ->
                             exportProgress = progress
                         }
