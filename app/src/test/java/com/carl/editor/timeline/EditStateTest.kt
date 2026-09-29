@@ -141,6 +141,17 @@ class EditStateTest {
 
 
     @Test
+    fun withMutedTogglesOnlyRequestedClip() {
+        val original = state()
+        val muted = original.withMuted("b", true)
+        assertFalse(original.clips.first { it.id == "b" }.muted)
+        assertTrue(muted.clips.first { it.id == "b" }.muted)
+        assertFalse(muted.clips.first { it.id == "a" }.muted)
+        assertSame(muted, muted.withMuted("b", true))
+        assertSame(original, original.withMuted("missing", true))
+    }
+
+    @Test
     fun withSpeedInvalidOrMissingInputIsNoOp() {
         val original = state()
         assertSame(original, original.withSpeed("missing", 2f))
