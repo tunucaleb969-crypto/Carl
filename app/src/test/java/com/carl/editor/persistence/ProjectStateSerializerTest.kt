@@ -49,8 +49,10 @@ class ProjectStateSerializerTest {
         val restored = try {
             ProjectStateSerializer.fromJsonOrThrow(json)
         } catch (error: Throwable) {
-            error.printStackTrace()
-            throw error
+            throw AssertionError(
+                "ProjectStateSerializer.fromJsonOrThrow failed: " + error::class.qualifiedName + ": " + error.message,
+                error
+            )
         }
 
         assertNotNull(restored)
