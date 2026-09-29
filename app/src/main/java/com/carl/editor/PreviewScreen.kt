@@ -456,13 +456,14 @@ fun PreviewScreen(
                 onTrimStartDragBegin = { draftClips = history.present.clips },
                 onTrimStartDrag = { deltaMs ->
                     draftClips = draftClips?.toMutableList()?.also { list ->
-                        if (list.isNotEmpty()) {
-                            val first = list.first()
-                            // deltaMs is timeline-space; convert to source-space via this clip's speed.
-                            val sourceDelta = (deltaMs * first.speed).toLong()
-                            val newStart = (first.sourceStartMs + sourceDelta)
-                                .coerceIn(0L, first.sourceEndMs - EditState.MIN_CLIP_MS)
-                            list[0] = first.copy(sourceStartMs = newStart)
+                        val index = list.indexOfFirst { it.id == selectedClipId }
+                        if (index >= 0) {
+                            val clip = list[index]
+                            // Dragging is timeline-space; convert through this clip's current speed.
+                            val sourceDelta = (deltaMs * clip.speed).toLong()
+                            val newStart = (clip.sourceStartMs + sourceDelta)
+                                .coerceIn(0L, clip.sourceEndMs - EditState.MIN_CLIP_MS)
+                            list[index] = clip.copy(sourceStartMs = newStart)
                         }
                     }
                 },
@@ -470,13 +471,13 @@ fun PreviewScreen(
                 onTrimEndDragBegin = { draftClips = history.present.clips },
                 onTrimEndDrag = { deltaMs ->
                     draftClips = draftClips?.toMutableList()?.also { list ->
-                        if (list.isNotEmpty()) {
-                            val lastIndex = list.size - 1
-                            val last = list[lastIndex]
-                            val sourceDelta = (deltaMs * last.speed).toLong()
-                            val newEnd = (last.sourceEndMs + sourceDelta)
-                                .coerceIn(last.sourceStartMs + EditState.MIN_CLIP_MS, sourceDurationMs)
-                            list[lastIndex] = last.copy(sourceEndMs = newEnd)
+                        val index = list.indexOfFirst { it.id == selectedClipId }
+                        if (index >= 0) {
+                            val clip = list[index]
+                            val sourceDelta = (deltaMs * clip.speed).toLong()
+                            val newEnd = (clip.sourceEndMs + sourceDelta)
+                                .coerceIn(clip.sourceStartMs + EditState.MIN_CLIP_MS, sourceDurationMs)
+                            list[index] = clip.copy(sourceEndMs = newEnd)
                         }
                     }
                 },
