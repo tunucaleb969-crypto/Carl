@@ -298,6 +298,7 @@ fun PreviewScreen(
                         ).collect { progress ->
                             exportProgress = progress
                         }
+                        exportJob = null
                     }
                 }
             )
@@ -551,9 +552,10 @@ fun PreviewScreen(
                 exportJob = null
             },
             onCancel = {
+                // Cancellation is asynchronous. Keep the dialog visible until the Flow closes,
+                // so the user cannot accidentally start a second export while Transformer is
+                // still unwinding and cleaning its temporary output.
                 exportJob?.cancel()
-                exportJob = null
-                exportProgress = null
             },
             onOpen = { uri ->
                 runCatching {
