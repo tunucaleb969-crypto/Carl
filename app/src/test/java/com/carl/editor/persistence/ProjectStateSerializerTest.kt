@@ -46,7 +46,12 @@ class ProjectStateSerializerTest {
         val json = ProjectStateSerializer.toJson("Demo", "content://video/1", original)
         assert(json.contains("backgroundColor")) { "Serialized project is missing canvas background color" }
 
-        val restored = ProjectStateSerializer.fromJsonOrThrow(json)
+        val restored = try {
+            ProjectStateSerializer.fromJsonOrThrow(json)
+        } catch (error: Throwable) {
+            error.printStackTrace()
+            throw error
+        }
 
         assertNotNull(restored)
         assertEquals("Demo", restored!!.projectName)
