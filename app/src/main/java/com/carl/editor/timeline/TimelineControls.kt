@@ -16,6 +16,8 @@ import androidx.compose.material.icons.filled.ContentCut
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.VolumeOff
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -42,6 +44,7 @@ fun TimelineControls(
     clips: List<Clip>,
     selectedClipId: String?,
     currentClipSpeed: Float,
+    currentClipMuted: Boolean,
     onSeek: (Long) -> Unit,
     onSelectClip: (String) -> Unit,
     onDeleteClip: () -> Unit,
@@ -51,6 +54,7 @@ fun TimelineControls(
     onPlayPause: () -> Unit,
     onSplit: () -> Unit,
     onSetSpeed: (Float) -> Unit,
+    onToggleMute: () -> Unit,
     onTrimStartDragBegin: () -> Unit,
     onTrimStartDrag: (deltaMs: Long) -> Unit,
     onTrimStartDragEnd: () -> Unit,
@@ -315,6 +319,13 @@ fun TimelineControls(
             }
             IconButton(onClick = onSplit) {
                 Icon(Icons.Filled.ContentCut, contentDescription = "Split", tint = Color.White)
+            }
+            IconButton(onClick = onToggleMute) {
+                Icon(
+                    if (currentClipMuted) Icons.Filled.VolumeOff else Icons.Filled.VolumeUp,
+                    contentDescription = if (currentClipMuted) "Unmute clip" else "Mute clip",
+                    tint = if (currentClipMuted) ACCENT else Color.White
+                )
             }
         }
 
