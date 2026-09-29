@@ -22,6 +22,8 @@ import androidx.media3.transformer.ExportResult
 import androidx.media3.transformer.ProgressHolder
 import androidx.media3.transformer.Transformer
 import androidx.media3.effect.SpeedChangeEffect
+import androidx.media3.effect.Presentation
+import com.carl.editor.canvas.CanvasSettings
 import com.carl.editor.timeline.Clip
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
@@ -61,7 +63,12 @@ sealed class ExportProgress {
 @OptIn(UnstableApi::class)
 class ExportEngine(private val context: Context) {
 
-    fun export(sourceUri: Uri, clips: List<Clip>, videoEffects: List<Effect> = emptyList()): Flow<ExportProgress> = callbackFlow {
+    fun export(
+        sourceUri: Uri,
+        clips: List<Clip>,
+        videoEffects: List<Effect> = emptyList(),
+        canvasSettings: CanvasSettings = CanvasSettings()
+    ): Flow<ExportProgress> = callbackFlow {
         if (clips.isEmpty()) {
             trySend(ExportProgress.Failure("Nothing to export - the timeline is empty."))
             close()
@@ -89,7 +96,24 @@ class ExportEngine(private val context: Context) {
 
         val editedItems = buildEditedItems(sourceUri, clips, videoEffects)
 
-        val composition = Composition.Builder(EditedMediaItemSequence(editedItems)).build()
+        // Canvas aspect ratio is a composition-level concern: it must wrap the complete
+        // concatenated timeline, not each source clip independently. Presentation uses
+        // letterboxing/pillarboxing so the selected frame is preserved rather than stretched.
+        val compositionBuilder = Composition.Builder(EditedMediaItemSequence(editedItems))
+        canvasSettings.aspectRatio.ratio?.let { ratio ->
+            compositionBuilder.setEffects(
+                Effects(
+                    emptyList(),
+                    listOf(
+                        Presentation.createForAspectRatio(
+                            ratio,
+                            Presentation.LAYOUT_SCALE_TO_FIT
+                        )
+                    )
+                )
+            )
+        }
+        val composition = compositionBuilder.build()
         val isTerminal = AtomicBoolean(false)
         val completedSuccessfully = AtomicBoolean(false)
         val mainHandler = Handler(Looper.getMainLooper())
