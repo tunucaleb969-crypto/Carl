@@ -15,6 +15,16 @@ import org.junit.Test
 
 class ProjectStateSerializerTest {
     @Test
+    fun roundTrip_preserves_muted_clip_state() {
+        val original = sampleState().copy(
+            timeline = sampleState().timeline.withMuted(sampleState().timeline.clips.first().id, true)
+        )
+        val json = ProjectStateSerializer.toJson("Muted", "content://video", original)
+        val restored = ProjectStateSerializer.fromJson(json)!!
+        assertTrue(restored.state.clips.first().muted)
+    }
+
+    @Test
     fun roundTrip_preserves_project_graph_and_visual_state() {
         val first = Clip(
             id = "clip-a",
