@@ -101,8 +101,18 @@ class ExportEngine(private val context: Context) {
                 .addListener(object : Transformer.Listener {
                     override fun onCompleted(finishedComposition: Composition, exportResult: ExportResult) {
                         if (isTerminal.compareAndSet(false, true)) {
-                            val result = trySend(ExportProgress.Success(FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", outputFile)))
-                            completedSuccessfully.set(result.isSuccess)
+                            // Mark success before notifying the collector so cancellation
+                            // at completion cannot delete a valid finished export.
+                            completedSuccessfully.set(true)
+                            trySend(
+                                ExportProgress.Success(
+                                    FileProvider.getUriForFile(
+                                        context,
+                                        "${context.packageName}.fileprovider",
+                                        outputFile
+                                    )
+                                )
+                            )
                             close()
                         }
                     }
@@ -223,7 +233,7 @@ class ExportEngine(private val context: Context) {
         }
 
         null -> "The selected source has no URI scheme."
-        else -> null
+        else -> "The selected source format is not supported by Carl."
     }
 
     private fun createOutputFile(): File? {
