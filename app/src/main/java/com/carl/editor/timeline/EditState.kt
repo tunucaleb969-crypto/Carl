@@ -122,8 +122,15 @@ data class EditState(
 
     /** Sets the playback-rate multiplier for the clip with [clipId], clamped to a sane range. */
     fun withSpeed(clipId: String, speed: Float): EditState {
+        val index = indexOfClip(clipId)
+        // Ignore invalid UI/programmatic input instead of allowing NaN/Infinity to reach Clip,
+        // where it would throw and potentially interrupt an editing gesture.
+        if (index == -1 || !speed.isFinite()) return this
         val clamped = speed.coerceIn(0.25f, 4f)
-        return copy(clips = clips.map { if (it.id == clipId) it.copy(speed = clamped) else it })
+        if (clips[index].speed == clamped) return this
+        return copy(clips = clips.mapIndexed { clipIndex, clip ->
+            if (clipIndex == index) clip.copy(speed = clamped) else clip
+        })
     }
 
     /** Updates one clip atomically while preserving every other timeline clip. */
