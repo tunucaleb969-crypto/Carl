@@ -79,6 +79,10 @@ fun TimelineControls(
         return ((px / width) * durationMs).toLong()
     }
 
+    val selectedIndex = clips.indexOfFirst { it.id == selectedClipId }
+    val selectedStartMs = if (selectedIndex >= 0) clips.take(selectedIndex).sumOf { it.durationMs } else 0L
+    val selectedEndMs = if (selectedIndex >= 0) selectedStartMs + clips[selectedIndex].durationMs else durationMs
+
     fun msToPx(ms: Long): Float {
         if (durationMs == 0L) return 0f
         return (ms.toFloat() / durationMs) * contentWidthPx()
@@ -184,22 +188,22 @@ fun TimelineControls(
                     .background(Color.White, RoundedCornerShape(2.dp))
             )
 
-            // start trim handle (always the left edge of the timeline) - drawn with a visible
+            // start trim handle (selected clip left edge) - drawn with a visible
             // grip mark so it reads as a draggable control, not just a colored block
             Box(
                 modifier = Modifier
-                    .offset(x = withDp(-8f))
+                    .offset(x = withDp(msToPx(selectedStartMs) - 8f))
                     .width(16.dp)
                     .height(48.dp)
                     .align(Alignment.CenterStart)
                     .background(ACCENT, RoundedCornerShape(4.dp))
                     .pointerInput(durationMs) {
                         detectDragGestures(
-                            onDragStart = { onTrimStartDragBegin() },
+                            onDragStart = { if (selectedIndex >= 0) onTrimStartDragBegin() },
                             onDragEnd = { onTrimStartDragEnd() },
                             onDragCancel = { onTrimStartDragEnd() }
                         ) { _, dragAmount ->
-                            onTrimStartDrag(pxDeltaToMsDelta(dragAmount.x))
+                            if (selectedIndex >= 0) onTrimStartDrag(pxDeltaToMsDelta(dragAmount.x))
                         }
                     }
             ) {
@@ -212,21 +216,21 @@ fun TimelineControls(
                 )
             }
 
-            // end trim handle (always the right edge of the timeline) - same grip treatment
+            // end trim handle (selected clip right edge) - same grip treatment
             Box(
                 modifier = Modifier
-                    .offset(x = withDp(msToPx(durationMs) - 8f))
+                    .offset(x = withDp(msToPx(selectedEndMs) - 8f))
                     .width(16.dp)
                     .height(48.dp)
                     .align(Alignment.CenterStart)
                     .background(ACCENT, RoundedCornerShape(4.dp))
                     .pointerInput(durationMs) {
                         detectDragGestures(
-                            onDragStart = { onTrimEndDragBegin() },
+                            onDragStart = { if (selectedIndex >= 0) onTrimEndDragBegin() },
                             onDragEnd = { onTrimEndDragEnd() },
                             onDragCancel = { onTrimEndDragEnd() }
                         ) { _, dragAmount ->
-                            onTrimEndDrag(pxDeltaToMsDelta(dragAmount.x))
+                            if (selectedIndex >= 0) onTrimEndDrag(pxDeltaToMsDelta(dragAmount.x))
                         }
                     }
             ) {
