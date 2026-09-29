@@ -25,6 +25,14 @@ jobs:
       - name: Run unit tests
         run: ./gradlew testDebugUnitTest
 
+      - name: Upload unit-test report on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: carl-test-report
+          path: app/build/reports/tests/testDebugUnitTest
+          if-no-files-found: ignore
+
       - name: Build debug APK
         run: ./gradlew assembleDebug
 
