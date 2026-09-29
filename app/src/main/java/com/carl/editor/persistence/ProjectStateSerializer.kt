@@ -30,18 +30,14 @@ object ProjectStateSerializer {
             .toString()
 
     fun fromJson(json: String): SavedProject? = runCatching {
-        fromJsonOrThrow(json)
-    }.getOrNull()
-
-    internal fun fromJsonOrThrow(json: String): SavedProject {
         val root = JSONObject(json)
         require(root.getInt("schemaVersion") in 2..SCHEMA_VERSION) { "Unsupported project schema" }
-        return SavedProject(
+        SavedProject(
             projectName = root.optString("projectName", "Untitled Project"),
             sourceUri = root.getString("sourceUri"),
             state = stateFromJson(root.getJSONObject("state"))
         )
-    }
+    }.getOrNull()
 
     data class SavedProject(
         val projectName: String,
