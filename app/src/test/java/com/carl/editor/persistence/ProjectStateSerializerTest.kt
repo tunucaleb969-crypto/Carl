@@ -43,7 +43,14 @@ class ProjectStateSerializerTest {
             canvasSettings = CanvasSettings(AspectRatioPreset.RATIO_9_16, Color(0xFF11223344))
         )
 
-        val json = ProjectStateSerializer.toJson("Demo", "content://video/1", original)
+        val json = try {
+            ProjectStateSerializer.toJson("Demo", "content://video/1", original)
+        } catch (error: Throwable) {
+            throw AssertionError(
+                "ProjectStateSerializer.toJson failed: " + error::class.qualifiedName + ": " + error.message,
+                error
+            )
+        }
         assert(json.contains("backgroundColor")) { "Serialized project is missing canvas background color" }
 
         val restored = try {
