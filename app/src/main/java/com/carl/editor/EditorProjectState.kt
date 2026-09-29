@@ -49,6 +49,9 @@ data class EditorProjectState(
     fun withSpeed(clipId: String, speed: Float): EditorProjectState =
         copy(timeline = timeline.withSpeed(clipId, speed))
 
+    fun withMuted(clipId: String, muted: Boolean): EditorProjectState =
+        copy(timeline = timeline.withMuted(clipId, muted))
+
     fun withClipTransform(clipId: String, transform: GlobalTransform): EditorProjectState =
         updateClip(clipId) { it.copy(transform = transform) }
 
