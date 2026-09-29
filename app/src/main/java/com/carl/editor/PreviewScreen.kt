@@ -118,11 +118,13 @@ fun PreviewScreen(
     val displayClips = draftClips ?: committedClips
     val displayDurationMs = displayClips.sumOf { it.durationMs }
 
-    fun applySpeedForCurrentItem() {
+    fun applyPlaybackStateForCurrentItem() {
         val clips = history.present.clips
         val itemIndex = exoPlayer.currentMediaItemIndex
         if (itemIndex in clips.indices) {
-            exoPlayer.playbackParameters = PlaybackParameters(clips[itemIndex].speed)
+            val clip = clips[itemIndex]
+            exoPlayer.playbackParameters = PlaybackParameters(clip.speed)
+            exoPlayer.volume = if (clip.muted) 0f else 1f
         }
     }
 
@@ -171,14 +173,14 @@ fun PreviewScreen(
             if (remaining < clip.durationMs || (index == clips.lastIndex && remaining == clip.durationMs)) {
                 val sourcePositionMs = (remaining * clip.speed).toLong()
                 exoPlayer.seekTo(index, sourcePositionMs)
-                applySpeedForCurrentItem()
+                applyPlaybackStateForCurrentItem()
                 return
             }
             remaining -= clip.durationMs
         }
         val lastIndex = clips.size - 1
         exoPlayer.seekTo(lastIndex, clips.last().sourceDurationMs)
-        applySpeedForCurrentItem()
+        applyPlaybackStateForCurrentItem()
     }
 
     // Rebuild the ExoPlayer playlist whenever the committed clip list OR either whole-video effect
@@ -209,7 +211,7 @@ fun PreviewScreen(
         exoPlayer.prepare()
         seekTimelineMs(preservedTimelinePositionMs)
         exoPlayer.playWhenReady = isPlaying
-        applySpeedForCurrentItem()
+        applyPlaybackStateForCurrentItem()
     }
 
     DisposableEffect(Unit) {
@@ -221,7 +223,7 @@ fun PreviewScreen(
             }
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 // Each clip may have its own speed - re-apply as playback crosses into the next one.
-                applySpeedForCurrentItem()
+                applyPlaybackStateForCurrentItem()
             }
             override fun onPlayerError(error: PlaybackException) {
                 // Never fail silently: codec issues, corrupted files, or an effects-pipeline
@@ -366,6 +368,7 @@ fun PreviewScreen(
                 clips = displayClips,
                 selectedClipId = selectedClipId,
                 currentClipSpeed = currentClipSpeed,
+                currentClipMuted = history.present.clips.getOrNull(history.present.clipIndexAt(positionMs))?.muted == true,
                 onSeek = { seekTimelineMs(it) },
                 onSelectClip = { id ->
                     selectedClipId = id
@@ -458,6 +461,13 @@ fun PreviewScreen(
                     if (index >= 0) {
                         val clipId = history.present.clips[index].id
                         history = history.push(history.present.withSpeed(clipId, speed))
+                    }
+                },
+                onToggleMute = {
+                    val index = history.present.clipIndexAt(positionMs)
+                    if (index >= 0) {
+                        val clip = history.present.clips[index]
+                        history = history.push(history.present.withMuted(clip.id, !clip.muted))
                     }
                 },
                 onTrimStartDragBegin = { draftClips = history.present.clips },
