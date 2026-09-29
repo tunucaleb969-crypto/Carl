@@ -141,6 +141,15 @@ class EditStateTest {
 
 
     @Test
+    fun withSpeedInvalidOrMissingInputIsNoOp() {
+        val original = state()
+        assertSame(original, original.withSpeed("missing", 2f))
+        assertSame(original, original.withSpeed("b", Float.NaN))
+        assertSame(original, original.withSpeed("b", Float.POSITIVE_INFINITY))
+        assertSame(original, original.withSpeed("b", 1f))
+    }
+
+    @Test
     fun updateClipChangesOnlyTargetClip() {
         val original = state()
         val updated = original.updateClip("b") { it.copy(speed = 2f) }
