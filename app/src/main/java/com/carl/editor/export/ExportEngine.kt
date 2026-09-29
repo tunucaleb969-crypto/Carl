@@ -101,7 +101,8 @@ class ExportEngine(private val context: Context) {
         // letterboxing/pillarboxing so the selected frame is preserved rather than stretched.
         val compositionBuilder = Composition.Builder(EditedMediaItemSequence(editedItems))
         canvasSettings.aspectRatio.ratio?.let { ratio ->
-            compositionBuilder.setEffects(
+            compositionBuilder.setRemoveAudio(clip.muted)
+            .setEffects(
                 Effects(
                     emptyList(),
                     listOf(
