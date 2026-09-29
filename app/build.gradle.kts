@@ -55,4 +55,7 @@ dependencies {
     implementation("androidx.compose.foundation:foundation:1.6.1")
 
     testImplementation("junit:junit:4.13.2")
+    // Android's framework org.json is not implemented in JVM unit tests; provide the
+    // reference implementation so persistence tests execute the real JSON code path.
+    testImplementation("org.json:json:20260814")
 }
