@@ -290,15 +290,20 @@ fun PreviewScreen(
                     exportJob?.cancel()
                     exportProgress = ExportProgress.InProgress(0)
                     exportJob = exportScope.launch {
-                        exportEngine.export(
-                            uri,
-                            committedClips,
-                            globalCrop.toEffects() + globalTransform.toEffects() + colorAdjustment.toEffects(),
-                            canvasSettings = canvasSettings
-                        ).collect { progress ->
-                            exportProgress = progress
+                        try {
+                            exportEngine.export(
+                                uri,
+                                committedClips,
+                                globalCrop.toEffects() + globalTransform.toEffects() + colorAdjustment.toEffects(),
+                                canvasSettings = canvasSettings
+                            ).collect { progress ->
+                                exportProgress = progress
+                            }
+                        } finally {
+                            // Cancellation throws out of collect; always release the UI's
+                            // in-flight marker so export can be started again safely.
+                            exportJob = null
                         }
-                        exportJob = null
                     }
                 }
             )
