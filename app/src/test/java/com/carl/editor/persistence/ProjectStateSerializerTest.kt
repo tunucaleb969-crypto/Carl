@@ -11,9 +11,19 @@ import com.carl.editor.timeline.Clip
 import com.carl.editor.timeline.EditState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ProjectStateSerializerTest {
+    private fun sampleState(): EditorProjectState = EditorProjectState(
+        timeline = EditState(
+            clips = listOf(
+                Clip(id = "sample-a", sourceStartMs = 0L, sourceEndMs = 1_000L),
+                Clip(id = "sample-b", sourceStartMs = 1_000L, sourceEndMs = 2_000L)
+            )
+        )
+    )
+
     @Test
     fun roundTrip_preserves_muted_clip_state() {
         val original = sampleState().copy(
